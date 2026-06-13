@@ -1,0 +1,95 @@
+site_name: LAN Foundry Docs
+site_description: Privacy-first local surveillance documentation — free for everyone
+site_author: LAN Foundry
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables
+
+nav:
+  - Home: index.md
+  - Privacy & Security:
+    - Why local NVR: privacy/why-local-nvr.md
+    - What is ONVIF: privacy/what-is-onvif.md
+    - Blocking cloud telemetry: privacy/blocking-telemetry.md
+  - Network Setup:
+    - Camera VLAN in OPNsense: network/vlan-opnsense.md
+    - DNS entries in OPNsense: network/dns-opnsense.md
+    - Caddy reverse proxy: network/caddy-reverse-proxy.md
+    - Static IP assignment: network/static-ip.md
+    - Camera VLAN on other routers: network/vlan-other-routers.md
+    - Remote access with Tailscale: network/tailscale.md
+  - Camera Setup:
+    - Adding your first camera: cameras/first-camera.md
+    - Tested camera list: cameras/tested-cameras.md
+    - Camera VLAN placement: cameras/vlan-placement.md
+    - Recording zones and motion: cameras/zones-motion.md
+    - Object detection with Coral TPU: cameras/coral-tpu.md
+    - Tuning motion sensitivity: cameras/tuning-sensitivity.md
+  - Notifications:
+    - Setting up ntfy: notifications/ntfy-setup.md
+    - ntfy on your phone: notifications/ntfy-mobile.md
+    - Filtering events: notifications/filtering.md
+    - Notification schedules: notifications/schedules.md
+  - Storage:
+    - How Frigate stores recordings: storage/frigate-storage.md
+    - Retention policies: storage/retention.md
+    - Drive health with Cockpit: storage/drive-health.md
+    - Adding more storage: storage/adding-storage.md
+  - Maintenance:
+    - Updating via Portainer: maintenance/portainer-updates.md
+    - Updating Ubuntu Server: maintenance/ubuntu-updates.md
+    - Backing up Frigate config: maintenance/backup.md
+    - Restoring from backup: maintenance/restore.md
+    - Container won't start: maintenance/container-troubleshoot.md
+  - Troubleshooting:
+    - Camera feed not showing: troubleshooting/camera-feed.md
+    - Can't reach service by hostname: troubleshooting/hostname.md
+    - Not receiving notifications: troubleshooting/notifications.md
+    - NVR slow or dropping frames: troubleshooting/performance.md
+    - Drive errors in Cockpit: troubleshooting/drive-errors.md
+    - Linux resources: troubleshooting/linux-resources.md
+    - Docker resources: troubleshooting/docker-resources.md
+  - Going Further:
+    - Adding Home Assistant: further/home-assistant.md
+    - Frigate + Home Assistant: further/frigate-home-assistant.md
+    - Hardware potential: further/hardware-potential.md
+    - Community resources: further/community.md
