@@ -2,5 +2,9 @@
 
 {% block content %}
   {{ super() }}
+{% endblock %}
+
+{% block footer %}
   {% include "partials/feedback.html" %}
+  {{ super() }}
 {% endblock %}
