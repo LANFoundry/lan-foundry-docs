@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1 style="color: red;">OVERRIDE IS WORKING</h1>
   {{ super() }}
+  {% include "partials/feedback.html" %}
 {% endblock %}
