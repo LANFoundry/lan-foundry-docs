@@ -133,4 +133,4 @@ Try flushing the DNS cache on your client device. On Windows, run `ipconfig /flu
 
 ## What's Next
 
-With DNS set up, the next step is making sure Caddy is correctly configured to route traffic for all three hostnames to their respective containers over your Docker network. See the **Caddy Reverse Proxy Setup** guide for a walkthrough of the Docker Compose configuration and Caddyfile.
+With DNS set up, the next step is making sure Caddy is correctly configured to route traffic for all three hostnames to their respective containers over your Docker network. See the [Caddy Reverse Proxy Setup](caddy-reverse-proxy.md) guide for a walkthrough of the Docker Compose configuration and Caddyfile.
