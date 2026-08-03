@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Troubleshooting
 
 Symptom-based guides when something stops working on the NVR, the network, or a camera feed.

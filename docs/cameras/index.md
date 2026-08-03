@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Camera Setup
 
 Add cameras to Frigate, tune detection, and expand beyond the first feed.

@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Going Further
 
 Optional integrations and community resources after your Argus NVR is running reliably.

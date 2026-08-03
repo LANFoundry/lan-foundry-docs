@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Storage
 
 How Frigate uses the ZFS recording pool, how long footage is kept, and how to monitor and expand capacity.

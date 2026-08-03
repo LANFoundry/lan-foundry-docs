@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Notifications
 
 Push alerts from Frigate to your phone when people, vehicles, or other events matter to you.

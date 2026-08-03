@@ -1,4 +1,4 @@
-{% if page %}
+{% if page and not page.meta.hide_feedback %}
 <div class="lf-feedback">
   <h3 class="lf-feedback__label">Was this page helpful?</h3>
 

@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Network Setup
 
 Connect the NVR and cameras on your LAN: VLANs, DNS, hostnames, static IPs, and optional remote access.

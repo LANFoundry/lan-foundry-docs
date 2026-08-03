@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Privacy & Security
 
 Why local recording matters and how to keep cameras off the cloud and off the rest of your network.

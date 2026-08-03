@@ -1,3 +1,7 @@
+---
+hide_feedback: true
+---
+
 # Maintenance
 
 Back up configuration, update containers and the OS safely, and recover when something breaks.
