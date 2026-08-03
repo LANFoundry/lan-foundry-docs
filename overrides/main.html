@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
-  {{ super() }}
-  {% include "partials/feedback.html" %}
-{% endblock %}
+{# Feedback form lives at overrides/partials/feedback.html. Material's own
+   built-in partials/content.html already includes "partials/feedback.html",
+   and custom_dir makes that resolve to our override — so it renders once
+   automatically. Do not re-include it here or it renders twice. #}

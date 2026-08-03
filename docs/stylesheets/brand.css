@@ -1,0 +1,147 @@
+/* LAN Foundry brand palette — see "LAN Foundry Brand Guidelines.pdf"
+   Ink / Slate / Line / Paper carry every layout; Molten Copper is the only
+   accent. Deeper copper on light surfaces, brighter copper on dark. */
+
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #F7F9FB;
+  --md-default-fg-color: #14191F;
+  --md-default-fg-color--light: #313942;
+  --md-default-fg-color--lighter: #E2E5E8;
+  --md-default-fg-color--lightest: #E2E5E8;
+
+  --md-primary-fg-color: #14191F;
+  --md-primary-fg-color--light: #313942;
+  --md-primary-fg-color--dark: #14191F;
+  --md-primary-bg-color: #F7F9FB;
+  --md-primary-bg-color--light: #F7F9FB;
+
+  --md-accent-fg-color: #DC701C;
+  --md-accent-fg-color--transparent: #DC701C1a;
+  --md-accent-bg-color: #F7F9FB;
+  --md-accent-bg-color--light: #F7F9FB;
+
+  --md-typeset-color: #14191F;
+  --md-typeset-a-color: #DC701C;
+  --md-typeset-mark-color: #DC701C33;
+
+  --md-code-bg-color: #E2E5E8;
+  --md-code-fg-color: #14191F;
+
+  --md-footer-bg-color: #14191F;
+  --md-footer-bg-color--dark: #14191F;
+  --md-footer-fg-color: #F7F9FB;
+  --md-footer-fg-color--light: #E2E5E8;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #14191F;
+  --md-default-fg-color: #F7F9FB;
+  --md-default-fg-color--light: #E2E5E8;
+  --md-default-fg-color--lighter: #313942;
+  --md-default-fg-color--lightest: #313942;
+
+  --md-primary-fg-color: #14191F;
+  --md-primary-fg-color--light: #313942;
+  --md-primary-fg-color--dark: #14191F;
+  --md-primary-bg-color: #F7F9FB;
+  --md-primary-bg-color--light: #F7F9FB;
+
+  --md-accent-fg-color: #EA7D2E;
+  --md-accent-fg-color--transparent: #EA7D2E1a;
+  --md-accent-bg-color: #14191F;
+  --md-accent-bg-color--light: #14191F;
+
+  --md-typeset-color: #F7F9FB;
+  --md-typeset-a-color: #EA7D2E;
+  --md-typeset-mark-color: #EA7D2E33;
+
+  --md-code-bg-color: #313942;
+  --md-code-fg-color: #F7F9FB;
+
+  --md-footer-bg-color: #14191F;
+  --md-footer-bg-color--dark: #14191F;
+  --md-footer-fg-color: #F7F9FB;
+  --md-footer-fg-color--light: #E2E5E8;
+}
+
+/* IBM Plex Mono is the guide's "labels & tagline" face — apply it to the
+   tracked-out UI chrome the guide treats as label text, not body copy. */
+.md-header__topic,
+.md-nav__title,
+.md-tabs__link,
+.md-footer-meta {
+  font-family: var(--md-code-font);
+  letter-spacing: 0.03em;
+}
+
+/* Molten Copper accent dot on the current nav/tab selection, echoing the
+   mark's center node instead of a plain underline. */
+.md-tabs__link--active,
+.md-nav__link--active {
+  color: var(--md-accent-fg-color) !important;
+}
+
+/* Page feedback form (overrides/partials/feedback.html) */
+.lf-feedback {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+}
+
+.lf-feedback__label {
+  margin-top: 0;
+  font-family: var(--md-code-font);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--md-default-fg-color--light);
+}
+
+.lf-feedback__intro {
+  font-size: 0.85rem;
+  color: var(--md-default-fg-color--light);
+  margin-bottom: 1rem;
+}
+
+.lf-feedback__field {
+  margin-bottom: 0.75rem;
+}
+
+.lf-feedback__field label {
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.lf-feedback__field select,
+.lf-feedback__field textarea {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  font-size: 0.85rem;
+  font-family: var(--md-text-font);
+}
+
+.lf-feedback__field textarea {
+  resize: vertical;
+}
+
+.lf-feedback__submit {
+  padding: 0.5rem 1.25rem;
+  background: var(--md-accent-fg-color);
+  color: var(--md-primary-bg-color);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.lf-feedback__submit:hover {
+  opacity: 0.85;
+}

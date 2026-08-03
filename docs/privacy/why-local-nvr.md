@@ -28,13 +28,13 @@ That's the core idea. No footage leaves your network unless you explicitly make 
  
 ## Why it matters
  
-**Your footage is yours.** Not stored on a server you don't control, not subject to a company's privacy policy changes, not accessible to employees or contractors you've never heard of. If you want to review footage from six months ago, you can, because it's sitting on your own drives.
+**Your footage is yours** - Not stored on a server you don't control, not subject to a company's privacy policy changes, not accessible to employees or contractors you've never heard of. If you want to review footage from six months ago, you can, because it's sitting on your own drives.
  
-**No subscription.** You pay for the hardware once. There's no monthly fee to access your own recordings, no tier that unlocks features you already paid for, and no price increase next year.
+**No subscription** - You pay for the hardware once. There's no monthly fee to access your own recordings, no tier that unlocks features you already paid for, and no price increase next year.
  
-**No single point of failure in the cloud.** Cloud services go down. Companies get acquired, change their policies, or shut down entirely. A local system keeps working regardless of what happens to any external company.
+**No single point of failure in the cloud** - Cloud services go down. Companies get acquired, change their policies, or shut down entirely. A local system keeps working regardless of what happens to any external company.
  
-**You control what leaves your network.** A well-configured local NVR can be set up so that camera traffic never reaches the internet at all, not even to phone home to the manufacturer. That's a level of privacy that no cloud-based system can offer by design.
+**You control what leaves your network** - A well-configured local NVR can be set up so that camera traffic never reaches the internet at all, not even to phone home to the manufacturer. That's a level of privacy that no cloud-based system can offer by design.
  
 ---
  
@@ -42,13 +42,13 @@ That's the core idea. No footage leaves your network unless you explicitly make 
  
 Local NVR isn't the right fit for everyone, and we'd rather tell you that upfront than have you buy something that doesn't match your needs.
  
-**Setup takes more effort than a plug-and-play camera.** Even with a pre-configured system like a LAN Foundry appliance, you'll need to connect hardware, assign your cameras to the right network, and spend some time with initial configuration. It's not difficult, but it's not instant either.
+**Setup takes more effort than a plug-and-play camera** - Even with a pre-configured system like a LAN Foundry appliance, you'll need to connect hardware, assign your cameras to the right network, and spend some time with initial configuration. It's not difficult, but it's not instant either.
  
-**The app experience is different.** You won't have a slick consumer app built by a team of hundreds. You'll have a capable, open-source interface that does everything you need, but it looks like software built by engineers rather than a consumer product team. Most people get comfortable with it quickly, but it's worth knowing going in.
+**The app experience is different** - You won't have a slick consumer app built by a team of hundreds. You'll have a capable, open-source interface that does everything you need, but it looks like software built by engineers rather than a consumer product team. Most people get comfortable with it quickly, but it's worth knowing going in.
  
-**Remote access requires a little more thought.** Accessing your footage from outside your home is absolutely possible, but it requires setting up a secure remote access method rather than just logging into an app. We have guides for this, and it's straightforward once you've done it, but it's an extra step.
+**Remote access requires a little more thought** - Accessing your footage from outside your home is absolutely possible, but it requires setting up a secure remote access method rather than just logging into an app. We have guides for this, and it's straightforward once you've done it, but it's an extra step.
  
-**You're responsible for your own hardware.** If a drive fails, you replace it. A good local NVR uses RAID storage so a single drive failure doesn't mean lost footage, but you're the one managing the system, not a support team at a camera company.
+**You're responsible for your own hardware** - If a drive fails, you replace it. A good local NVR uses RAID storage so a single drive failure doesn't mean lost footage, but you're the one managing the system, not a support team at a camera company.
  
 ---
  
@@ -60,7 +60,7 @@ Local NVR tends to be a great fit if you:
 - Are tired of subscription fees for something you already paid for
 - Want a system you actually own and control
 - Are comfortable spending an afternoon on initial setup
-- Have a router you can configure, or are willing to learn
+- Have a standard home router or are willing to eventually upgrade to one with VLAN support. A consumer router is a fine starting point. See [How much does your router matter?](privacy-levels.md) for what the options look like.
 It's probably not the right fit if you want something that works completely out of the box with zero configuration, or if you're comfortable with a cloud subscription and don't have strong feelings about where your footage lives.
  
 If you're in the first camp, you're in the right place.

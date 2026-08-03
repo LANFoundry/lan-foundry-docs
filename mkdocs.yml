@@ -1,27 +1,39 @@
 site_name: LAN Foundry Docs
-site_description: Privacy-first local surveillance documentation — free for everyone
+site_description: Documentation for locally hosted networking and storage — starting with the Argus NVR. Free for everyone.
 site_author: LAN Foundry
+
+# mkdocs serve only live-reloads docs_dir by default — without this, edits
+# under overrides/ (custom_dir) require a manual server restart to appear.
+watch:
+  - overrides
 
 theme:
   name: material
   custom_dir: overrides
+  logo: assets/branding/logo-mark.svg
+  favicon: assets/branding/favicon.png
+  font:
+    text: IBM Plex Sans
+    code: IBM Plex Mono
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: light blue
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: light blue
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   features:
     - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.indexes
     - navigation.sections
     - navigation.expand
     - navigation.top
@@ -29,8 +41,12 @@ theme:
     - search.suggest
     - content.code.copy
 
+extra_css:
+  - stylesheets/brand.css
+
 plugins:
   - search
+  - glightbox
 
 markdown_extensions:
   - admonition
@@ -47,49 +63,60 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - The Stack: about-the-stack.md
   - Privacy & Security:
+    - Overview: privacy/index.md
     - Why local NVR: privacy/why-local-nvr.md
+    - How much does your router matter: privacy/privacy-levels.md
     - What is ONVIF: privacy/what-is-onvif.md
     - Blocking cloud telemetry: privacy/blocking-telemetry.md
   - Network Setup:
+    - Overview: network/index.md
     - Camera VLAN in OPNsense: network/vlan-opnsense.md
+    - Camera VLAN in TP-Link Switch: network/vlan-tplink.md
     - DNS entries in OPNsense: network/dns-opnsense.md
     - Caddy reverse proxy: network/caddy-reverse-proxy.md
     - Static IP assignment: network/static-ip.md
-    - Camera VLAN on other routers: network/vlan-other-routers.md
+    - Camera VLAN on other Routers/Switches: network/vlan-other-routers.md
     - Remote access with Tailscale: network/tailscale.md
   - Camera Setup:
+    - Overview: cameras/index.md
     - Adding your first camera: cameras/first-camera.md
     - Tested camera list: cameras/tested-cameras.md
     - Camera VLAN placement: cameras/vlan-placement.md
     - Recording zones and motion: cameras/zones-motion.md
-    - Object detection with Coral TPU: cameras/coral-tpu.md
+    - AI accelerator setup: cameras/hailo-tpu.md
     - Tuning motion sensitivity: cameras/tuning-sensitivity.md
   - Notifications:
+    - Overview: notifications/index.md
     - Setting up ntfy: notifications/ntfy-setup.md
     - ntfy on your phone: notifications/ntfy-mobile.md
     - Filtering events: notifications/filtering.md
     - Notification schedules: notifications/schedules.md
   - Storage:
+    - Overview: storage/index.md
     - How Frigate stores recordings: storage/frigate-storage.md
     - Retention policies: storage/retention.md
     - Drive health with Cockpit: storage/drive-health.md
     - Adding more storage: storage/adding-storage.md
   - Maintenance:
+    - Overview: maintenance/index.md
+    - Backing up Frigate config: maintenance/backup.md
     - Updating via Portainer: maintenance/portainer-updates.md
     - Updating Ubuntu Server: maintenance/ubuntu-updates.md
-    - Backing up Frigate config: maintenance/backup.md
     - Restoring from backup: maintenance/restore.md
-    - Container won't start: maintenance/container-troubleshoot.md
   - Troubleshooting:
+    - Overview: troubleshooting/index.md
     - Camera feed not showing: troubleshooting/camera-feed.md
     - Can't reach service by hostname: troubleshooting/hostname.md
     - Not receiving notifications: troubleshooting/notifications.md
     - NVR slow or dropping frames: troubleshooting/performance.md
-    - Drive errors in Cockpit: troubleshooting/drive-errors.md
-    - Linux resources: troubleshooting/linux-resources.md
-    - Docker resources: troubleshooting/docker-resources.md
+    - Drive and pool errors: troubleshooting/drive-errors.md
+    - Container Issues: troubleshooting/container.md
+    - General Linux resources: troubleshooting/linux-resources.md
   - Going Further:
+    - Overview: further/index.md
+    - Additional notification integrations: further/notification-integrations.md
     - Adding Home Assistant: further/home-assistant.md
     - Frigate + Home Assistant: further/frigate-home-assistant.md
     - Hardware potential: further/hardware-potential.md

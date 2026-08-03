@@ -1,199 +1,100 @@
-# Blocking camera cloud telemetry at the firewall
+# Understanding network segmentation and VLANs
 
-Most security cameras, even ones marketed as working locally, will attempt to reach out to manufacturer servers when connected to a network. This happens in the background without any notification. Depending on the manufacturer, this traffic can include device registration, firmware check-ins, usage telemetry, or in some cases video thumbnails.
+When you connect a device to your home or business network, it joins everything else on that network. Your laptop, your phone, your security cameras, your smart thermostat, and your printer can all see and potentially talk to each other. For most devices that's fine. For some devices it's a problem.
 
-The good news is that blocking this behavior is straightforward if your cameras are on their own dedicated VLAN. Instead of trying to track down every domain a manufacturer uses and blocking them individually, you block all outbound internet traffic from the camera VLAN and only allow the specific communication your cameras actually need, which is talking to your NVR. You also lock down inbound access to the camera VLAN so that only the NVR can reach your cameras directly. No other device on your network needs that access.
-
-This guide walks through how to set that up in OPNsense, with a general explanation of the approach that applies to any firewall that supports VLANs.
+This guide explains what network segmentation is, why it matters for privacy and security, and how VLANs let you control which devices can talk to each other without running new cables or buying additional networking hardware.
 
 ---
 
-## Before you start
+## The problem with a flat network
 
-This guide assumes:
+A flat network is one where every device is on the same network segment. This is how most home and small business networks are set up by default. Your router hands out IP addresses to everything that connects, and all those devices can reach each other freely.
 
-- Your cameras are already on a dedicated VLAN, separate from your main network
-- Your NVR has a static IP address on that same VLAN
-- You have access to your firewall's admin interface
+This works well for devices you trust. It becomes a problem when you mix devices with different levels of trust or different purposes on the same network.
 
-If you haven't set up a camera VLAN yet, start with the [camera VLAN in OPNsense](../network/vlan-opnsense.md) guide first.
+Consider a few examples:
 
----
+**Security cameras** are designed to record continuously and in many cases are built to send data back to manufacturer servers. Even on a locally configured system, a camera with cloud features enabled will attempt to reach out to external servers in the background. On a flat network nothing stops it from doing that.
 
-## The concept
+**Smart home devices** like thermostats, doorbells, bulbs, and plugs are frequently built with minimal security in mind. Many have known vulnerabilities and receive infrequent firmware updates. A compromised smart bulb on a flat network has a path to everything else on that network including your computers and NAS.
 
-A VLAN is a logically separate network. Devices on your camera VLAN can communicate with each other, but by default they can't reach devices on other VLANs or the internet unless you explicitly create rules that allow it.
+**Guest devices** are phones and laptops belonging to visitors. You want them to have internet access but you probably don't want them to be able to browse your NAS, access your cameras, or reach other devices on your network.
 
-We're creating four rules across two interfaces:
-
-On the camera VLAN interface:
-1. **Allow** traffic from cameras to the NVR's static IP on required ports
-2. **Block** everything else outbound from the camera VLAN
-
-On the main LAN interface:
-3. **Allow** traffic from the NVR's static IP to the camera VLAN
-4. **Block** everything else inbound to the camera VLAN from the LAN
-
-The order matters within each interface. Firewall rules are evaluated top to bottom and the first matching rule wins. Allow rules always need to come before block rules, otherwise all traffic gets blocked before the allow rule is ever checked.
+In all three cases the problem is the same. Devices that should have limited, controlled access are instead on the same network as everything else with no restrictions on what they can reach.
 
 ---
 
-## A note about accessing your NVR
+## What a VLAN is
 
-Locking down the camera VLAN does not affect your ability to access Frigate, Cockpit, or Portainer. Those services run on the NVR and are accessed through Caddy on your main LAN, not through the camera VLAN directly. From your devices on the main network, everything works exactly as it did before. The camera VLAN lockdown only affects direct connections to camera IPs, which no device other than the NVR needs.
+VLAN stands for Virtual Local Area Network. It's a way of logically dividing a single physical network into multiple separate networks without running additional cables or buying additional routers.
 
----
+Think of your network as a building. A flat network is an open floor plan where everyone can walk anywhere freely. A VLAN is like adding walls and doors to that building. Devices in one room can't reach devices in another room unless there's a door connecting them, and you control where the doors are and who can use them.
 
-## What ports to allow
+Devices on different VLANs are isolated from each other by default. A camera on the camera VLAN can't reach your laptop on the main network VLAN. Traffic between VLANs only flows if your router has an explicit rule allowing it, and you define exactly what that rule permits.
 
-Your cameras need to reach the NVR, and the NVR needs to reach your cameras, on a small number of ports:
-
-| Protocol | Port | Purpose |
-|---|---|---|
-| TCP | 554 | RTSP video stream |
-| TCP/UDP | 8554 | RTSP alternate port (if configured) |
-| TCP | 80 | Camera web interface access from NVR |
-| TCP | 443 | Camera HTTPS access from NVR |
-| UDP | 3702 | ONVIF device discovery |
-
-If you're not sure which ports your specific cameras use, start with RTSP on 554 and ONVIF discovery on 3702. Those two cover the core communication your NVR needs to pull video and detect cameras.
+This isolation happens in software, on your existing hardware. You don't need a second router or a second switch. You need a router that supports VLAN configuration and a managed switch that can tag traffic by VLAN.
 
 ---
 
-## Setting up the rules in OPNsense
+## How VLANs solve the problem
 
-### Camera VLAN interface rules
+With VLANs you can put different types of devices into different network segments and control exactly what each segment can do.
 
-These rules control what your cameras can send out.
+A well-segmented home or small business network might look like this:
 
-**Step 1 — Navigate to the firewall rules for your camera VLAN**
+**Main network** — your computers, phones, tablets, and NAS. These devices can reach the internet and each other freely.
 
-In OPNsense go to Firewall, then Rules, then select your camera VLAN interface from the tabs at the top.
+**Camera network** — your security cameras. These devices can only reach your NVR. They cannot reach the internet, they cannot reach your main network, and nothing on your main network can reach them directly except the NVR. Footage flows from camera to NVR and nowhere else.
 
-**Step 2 — Create the outbound allow rule**
+**IoT network** — your smart home devices. These devices can reach the internet for updates and cloud features if you choose to allow that, but they cannot reach your main network or your camera network. A compromised smart device is contained.
 
-Click Add to create a new rule and set it up as follows:
+**Guest network** — visitor devices. Internet access only. No access to any other network segment.
 
-- Action: Pass
-- Interface: your camera VLAN interface
-- Direction: out
-- Protocol: TCP/UDP
-- Source: camera VLAN network
-- Destination: your NVR's static IP address
-- Destination port range: the ports from the table above
-- Description: Allow cameras to NVR
-
-Save the rule.
-
-**Step 3 — Create the outbound block rule**
-
-Click Add to create a second rule below the first and set it up as follows:
-
-- Action: Block
-- Interface: your camera VLAN interface
-- Direction: out
-- Protocol: any
-- Source: camera VLAN network
-- Destination: any
-- Description: Block all other outbound camera traffic
-
-Save the rule.
-
-**Step 4 — Apply the changes**
-
-Click Apply changes at the top of the rules page.
+Each of these segments is a VLAN. They share the same physical cables and the same switch, but they're logically separated and can only communicate where you explicitly allow it.
 
 ---
 
-### Main LAN interface rules
+## Controlling traffic between VLANs
 
-These rules control what can reach your cameras from the rest of your network.
+The router is where inter-VLAN traffic rules live. When a device on one VLAN tries to reach a device on another VLAN, that traffic has to pass through the router. The router checks its rules and either allows or blocks the traffic based on what you've configured.
 
-**Step 5 — Navigate to the firewall rules for your main LAN**
+This gives you precise control. For the camera network you might create rules like:
 
-In OPNsense go to Firewall, then Rules, then select your LAN interface from the tabs at the top.
+- Allow cameras to reach the NVR on specific ports
+- Allow the NVR to reach cameras on specific ports
+- Block everything else from the camera network outbound
+- Block everything on the main network from reaching camera IPs directly
 
-**Step 6 — Create the NVR inbound allow rule**
+The result is that your cameras can stream to your NVR, your NVR can reach your cameras for configuration, and nothing else can cross that boundary in either direction. The cameras are effectively invisible to the rest of your network and to the internet.
 
-Click Add to create a new rule and set it up as follows:
-
-- Action: Pass
-- Interface: LAN
-- Direction: in
-- Protocol: TCP/UDP
-- Source: your NVR's static IP address
-- Destination: camera VLAN network
-- Destination port range: the ports from the table above
-- Description: Allow NVR to cameras
-
-Save the rule.
-
-**Step 7 — Create the inbound block rule**
-
-Click Add to create a second rule below the first and set it up as follows:
-
-- Action: Block
-- Interface: LAN
-- Direction: in
-- Protocol: any
-- Source: any
-- Destination: camera VLAN network
-- Description: Block all other LAN access to camera VLAN
-
-Save the rule.
-
-**Step 8 — Apply the changes**
-
-Click Apply changes at the top of the rules page.
+OPNsense is a capable open source router platform that handles VLAN configuration and inter-VLAN firewall rules well. It's what LAN Foundry recommends and what our router-specific guides are written around. The same concepts apply to pfSense, UniFi, Mikrotik, and any other router platform that supports VLAN-aware firewall rules.
 
 ---
 
-## The general approach for other firewalls
+## What hardware you need
 
-If you're using pfSense, UniFi, or another firewall that supports VLANs, the logic is identical even if the interface looks different:
+Not all networking hardware supports VLANs. To implement network segmentation you need two things:
 
-- On the camera VLAN interface: allow cameras to reach the NVR on required ports, block everything else outbound
-- On the LAN interface: allow the NVR to reach cameras on required ports, block everything else inbound to the camera VLAN
-- Make sure allow rules are above block rules within each interface
-- Apply or save the changes
+**A VLAN-capable router** - 
+Your router needs to support creating multiple VLANs and configuring firewall rules between them. Most consumer routers either don't support this at all or support it in a limited way. A dedicated router running OPNsense, pfSense, or a business-grade router from Ubiquiti, Mikrotik, or similar gives you full control. Some ISP-provided routers have basic VLAN support but often lack the firewall rule granularity you need for proper segmentation.
 
-The specific steps vary by platform but the four-rule pattern is universal.
+**A managed switch** - 
+A standard unmanaged switch treats all traffic the same and has no concept of VLANs. A managed switch can tag traffic by VLAN, which means devices plugged into different ports can be assigned to different network segments even though they share the same physical switch. If all your devices plug directly into your router and you have no separate switch, you may not need a managed switch to get started. But most setups with more than a handful of devices benefit from one.
 
----
-
-## Verifying it's working
-
-Once your rules are applied, OPNsense's live log viewer lets you watch traffic in real time and confirm that the blocking is actually happening.
-
-**Step 1 — Open the live log**
-
-In OPNsense go to Firewall, then Log Files, then Live View.
-
-**Step 2 — Filter for your camera VLAN**
-
-In the interface filter, select your camera VLAN interface. This narrows the log to only traffic involving your cameras.
-
-**Step 3 — Watch for blocked traffic**
-
-Leave the live view running for a few minutes. You should see two types of entries:
-
-- Green entries showing traffic between your camera IPs and your NVR's static IP — these are the allowed streams working correctly
-- Red entries showing blocked traffic from your camera IPs to external destinations — these are phone-home attempts being stopped
-
-If you see red blocked entries to external IP addresses or domains, the rules are working exactly as intended.
-
-**Step 4 — Test the inbound lockdown**
-
-From a device on your main LAN that is not the NVR, try to open a browser and navigate directly to one of your camera's IP addresses. The connection should time out or be refused. If it does, the inbound block rule is working.
-
-**Step 5 — Confirm your cameras are still streaming**
-
-Open Frigate and verify all your camera feeds are still showing video. If a camera has gone offline, check that your allow rules cover the ports that camera is using and adjust if needed.
+If you're working with a LAN Foundry Argus system, the included TP-Link switch is a managed switch pre-selected for compatibility with this setup. The guides linked below walk through the configuration for that specific hardware.
 
 ---
 
 ## Where to go from here
 
-With these four rules in place your camera network is fully isolated. Your cameras can only talk to your NVR, your NVR can talk to your cameras, and nothing else on your network can reach the cameras directly. Footage stays local, telemetry is blocked, and your camera network is invisible to everything except the system that needs it.
+Now that you understand what VLANs are and how they solve the problem of untrusted devices on your network, the next step is actually setting one up. The guides below walk through the configuration for specific hardware:
 
-If you want to go deeper on network architecture, the [network architecture diagrams](#) guide shows how all the pieces fit together visually. If you're ready to start configuring your cameras in Frigate, head to the [adding your first camera](../cameras/first-camera.md) guide.
+**Router configuration**
+- [Setting up a camera VLAN in OPNsense](../network/vlan-opnsense.md)
+- [Setting up a camera VLAN on other routers](../network/vlan-other-routers.md)
+
+**Switch configuration**
+- [Setting up a camera VLAN on TP-Link TL-SG switches](../network/vlan-tplink.md)
+- [Setting up a camera VLAN on other managed switches](../network/vlan-other-routers.md#part-2-switch-configuration)
+
+If you're setting up a camera network specifically, start with the router guide for your platform first. The switch configuration follows once your router has the VLAN defined.

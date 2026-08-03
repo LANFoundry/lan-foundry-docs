@@ -30,11 +30,11 @@ If your camera supports ONVIF and your NVR supports ONVIF, they will work togeth
 
 This has real consequences for how you build and maintain your system:
 
-**You are not locked into a camera brand.** You can start with Amcrest cameras today and add Reolink or Hikvision cameras later. As long as they're ONVIF compliant, your NVR doesn't care who made them.
+**You are not locked into a camera brand** - You can start with Amcrest cameras today and add Reolink or Hikvision cameras later. As long as they're ONVIF compliant, your NVR doesn't care who made them.
 
-**You can replace cameras without replacing your whole system.** If a camera model gets discontinued, a better option comes out, or you just want to upgrade one camera, you can do that without touching the rest of your setup.
+**You can replace cameras without replacing your whole system** - If a camera model gets discontinued, a better option comes out, or you just want to upgrade one camera, you can do that without touching the rest of your setup.
 
-**You're not paying per-camera licensing fees.** Proprietary systems often charge you to add each new camera to their software. ONVIF-based systems don't have that concept. A camera is a camera.
+**You're not paying per-camera licensing fees** - Proprietary systems often charge you to add each new camera to their software. ONVIF-based systems don't have that concept. A camera is a camera.
 
 ---
 
@@ -46,7 +46,7 @@ Profile S is the most common and covers basic video streaming, which is what mos
 
 In practice this means that while two ONVIF cameras will both connect to your NVR, one might expose more configuration options than the other. A camera with solid ONVIF implementation will let you control PTZ movement, adjust stream settings, and configure motion detection directly from your NVR interface. A camera with a minimal implementation might only stream video and nothing else.
 
-This is why a tested compatibility list matters more than just checking the ONVIF logo on a box. We maintain a list of cameras we have personally verified with our software stack in the [tested camera list](tested-cameras.md).
+This is why a tested compatibility list matters more than just checking the ONVIF logo on a box. We maintain a list of cameras we have personally verified with our software stack in the [tested camera list](../cameras/tested-cameras.md).
 
 ---
 
@@ -67,4 +67,4 @@ Cameras that push you toward a proprietary app and make it difficult to access t
 
 If you're ready to start adding cameras to your system, the [adding your first camera](../cameras/first-camera.md) guide walks through the full process of connecting an ONVIF camera to Frigate.
 
-If you want to see which specific cameras we've tested and recommend, the [tested camera list](tested-cameras.md) is the place to start.
+If you want to see which specific cameras we've tested and recommend, the [tested camera list](../cameras/tested-cameras.md) is the place to start.

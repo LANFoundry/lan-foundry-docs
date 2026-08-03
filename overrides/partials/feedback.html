@@ -1,20 +1,20 @@
 {% if page %}
-<div class="feedback-block" style="margin-top: 2rem; padding: 1.5rem; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 4px;">
-  <h3 style="margin-top: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--md-default-fg-color--light);">Was this page helpful?</h3>
+<div class="lf-feedback">
+  <h3 class="lf-feedback__label">Was this page helpful?</h3>
 
-  <p style="font-size: 0.85rem; color: var(--md-default-fg-color--light); margin-bottom: 1rem;">
+  <p class="lf-feedback__intro">
     Found something wrong or out of date? Let us know below, or
     <a href="https://github.com/lanfoundry/lan-foundry-docs/issues/new?title=Feedback: {{ page.title }}&body=**Page:** {{ page.url }}%0A%0A**Issue:**%0A" target="_blank">open a GitHub issue</a>
     if you have a GitHub account.
   </p>
 
-  <form action="https://formspree.io/f/xykabrqe" method="POST">
+  <form class="lf-feedback__form" action="https://formspree.io/f/xykabrqe" method="POST">
     <input type="hidden" name="page" value="{{ page.title }}">
     <input type="hidden" name="url" value="{{ page.url }}">
 
-    <div style="margin-bottom: 0.75rem;">
-      <label style="font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">What type of issue is this?</label>
-      <select name="issue_type" required style="width: 100%; padding: 0.4rem; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 4px; background: var(--md-default-bg-color); color: var(--md-default-fg-color); font-size: 0.85rem;">
+    <div class="lf-feedback__field">
+      <label for="lf-issue-type">What type of issue is this?</label>
+      <select id="lf-issue-type" name="issue_type" required>
         <option value="" disabled selected>Select a category</option>
         <option value="factually_incorrect">Something is factually incorrect</option>
         <option value="outdated">Information is outdated</option>
@@ -25,12 +25,12 @@
       </select>
     </div>
 
-    <div style="margin-bottom: 0.75rem;">
-      <label style="font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Tell us more</label>
-      <textarea name="message" required rows="4" placeholder="Describe the issue as specifically as you can..." style="width: 100%; padding: 0.4rem; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 4px; background: var(--md-default-bg-color); color: var(--md-default-fg-color); font-size: 0.85rem; resize: vertical;"></textarea>
+    <div class="lf-feedback__field">
+      <label for="lf-message">Tell us more</label>
+      <textarea id="lf-message" name="message" required rows="4" placeholder="Describe the issue as specifically as you can..."></textarea>
     </div>
 
-    <button type="submit" style="padding: 0.4rem 1rem; background: var(--md-primary-fg-color); color: var(--md-primary-bg-color); border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer;">Send feedback</button>
+    <button type="submit" class="lf-feedback__submit">Send feedback</button>
   </form>
 </div>
 {% endif %}

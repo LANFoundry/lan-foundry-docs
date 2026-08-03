@@ -1,136 +1,225 @@
-# Setting Up DNS Host Overrides in OPNsense for NVR Services
+# Adding DNS entries in OPNsense for NVR services
 
-This guide walks you through adding DNS entries in OPNsense so your NVR services (Frigate, Portainer, and Cockpit) are accessible via clean hostnames like `frigate.nvr.local` instead of IP addresses with port numbers. This works in conjunction with Caddy running as a reverse proxy on your NVR.
+If you're setting up Caddy as a reverse proxy on your NVR, you'll reach your services by hostname — `frigate.internal`, `portainer.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal` — instead of remembering IP addresses and port numbers. Before any of that works, those hostnames need to resolve to your NVR's IP address on your network. This guide walks through adding those entries in OPNsense so every device on your LAN gets the right answer automatically, without editing a hosts file on each one.
 
----
-
-## Prerequisites
-
-Before starting, make sure you have:
-
-- OPNsense router up and running
-- Your NVR assigned a **static IP address** (either set on the NVR itself or via a DHCP reservation in OPNsense)
-- Caddy configured and running on the NVR (see the Caddy setup guide)
-- Client devices using OPNsense as their DNS server
-
-> **Note on static IPs:** Setting the static IP directly on the Ubuntu Server network interface is more reliable than a DHCP reservation. If the DHCP service ever restarts or the lease expires at an unexpected time, a DHCP reservation can temporarily assign the wrong address. A static IP configured on the host itself never changes regardless of what the router does.
+You may be here as the next step in building out your stack, or because you already set up Caddy and a hostname won't load in your browser. Either way, the fix is the same.
 
 ---
 
-## Step 1 — Navigate to the DNS Host Overrides Page
+## Before you start
 
-1. Log in to your OPNsense web interface
-2. In the top navigation, go to **Services → Unbound DNS → Host Overrides**
+This guide assumes:
 
-You should see a page with a table of any existing host overrides and an **Add** button in the top right corner.
+- OPNsense is installed and running as your network router
+- Your NVR has a static IP address on the main LAN, for example `192.168.1.100`. If not, complete the [static IP assignment](static-ip.md) guide first
+- You have access to the OPNsense web interface
 
----
+The [Caddy reverse proxy guide](caddy-reverse-proxy.md) points here because DNS should be in place before you test Caddy in a browser. You don't need Caddy running to complete the steps below. If Caddy isn't set up yet, finish here first and move on to that guide next.
 
-## Step 2 — Add a Host Override for Frigate
-
-Click the **+** (Add) button and fill in the fields as follows:
-
-| Field | Value |
-|---|---|
-| **Enabled** | Checked |
-| **Host** | `frigate` |
-| **Domain** | `nvr.local` |
-| **Type** | `A (IPv4)` |
-| **IP** | Your NVR's static IP address (e.g. `192.168.10.50`) |
-| **Description** | `Frigate NVR - Camera Management` |
-
-Click **Save**.
+Caddy routes traffic by hostname. Browsing to `https://192.168.1.100` won't land you on Frigate — Caddy needs to see `frigate.internal` in the request to know which service to forward to. Clean hostnames on standard ports 80 and 443 are the whole point of the reverse proxy setup.
 
 ---
 
-## Step 3 — Add a Host Override for Portainer
+## What DNS is doing here
 
-Click **+** again and fill in:
+When you type `frigate.internal` into your browser, your device asks a DNS server what IP address belongs to that name. If nothing on your network knows the answer, the request goes out to the public internet, which won't have an entry for your private NVR.
 
-| Field | Value |
-|---|---|
-| **Enabled** | Checked |
-| **Host** | `portainer` |
-| **Domain** | `nvr.local` |
-| **Type** | `A (IPv4)` |
-| **IP** | Your NVR's static IP address (same as above) |
-| **Description** | `Portainer - Container Management` |
+Public DNS servers like Google or Cloudflare resolve names on the internet. Local DNS resolves names that only exist on your home or business network. OPNsense runs **Unbound**, a local DNS resolver, and can answer for hostnames you define yourself.
 
-Click **Save**.
-
----
-
-## Step 4 — Add a Host Override for Cockpit
-
-Click **+** again and fill in:
-
-| Field | Value |
-|---|---|
-| **Enabled** | Checked |
-| **Host** | `cockpit` |
-| **Domain** | `nvr.local` |
-| **Type** | `A (IPv4)` |
-| **IP** | Your NVR's static IP address (same as above) |
-| **Description** | `Cockpit - System Management` |
-
-Click **Save**.
-
----
-
-## Step 5 — Apply the Changes
-
-After saving all three entries, click the **Apply** button at the top of the Host Overrides page. OPNsense will reload the Unbound DNS service with the new entries active.
-
----
-
-## Step 6 — Verify DNS Resolution
-
-From any device on your network that uses OPNsense as its DNS server, open a terminal and run:
+Here's how the pieces fit together:
 
 ```
-nslookup frigate.nvr.local
+Your device  →  "What is frigate.internal?"  →  OPNsense (Unbound)
+             ←  "192.168.1.100"           ←
+Your device  →  HTTPS to 192.168.1.100, Host: frigate.internal
+             →  Caddy reads the hostname and routes to Frigate
 ```
 
-You should get back your NVR's static IP address. Repeat for `portainer.nvr.local` and `cockpit.nvr.local` to confirm all three are resolving correctly.
-
-If you get no response or a "server can't find" error, see the Troubleshooting section below.
+DNS gets the request to the right machine. Caddy gets it to the right service on that machine. Both have to agree on the hostname.
 
 ---
 
-## Step 7 — Access Your Services
+## The hostnames you'll be creating
 
-With DNS resolving and Caddy running on the NVR, you can now access your services at:
+These hostnames match the [Caddy reverse proxy guide](caddy-reverse-proxy.md) exactly:
 
-- `https://frigate.nvr.local`
-- `https://portainer.nvr.local`
-- `https://cockpit.nvr.local`
+| Service   | Hostname              | Points to                         |
+|-----------|-----------------------|-----------------------------------|
+| Frigate   | `frigate.internal`    | NVR static IP (e.g. `192.168.1.100`) |
+| Portainer | `portainer.internal`  | NVR static IP                     |
+| Cockpit   | `cockpit.internal`    | NVR static IP                     |
+| ntfy      | `ntfy.internal`       | NVR static IP                     |
+| Dozzle    | `dozzle.internal`     | NVR static IP                     |
 
-No port numbers needed. Caddy handles routing traffic to the correct service based on the hostname.
-
-> **Browser certificate warning:** Your browser will likely show a certificate warning the first time you visit each address. This is expected when using a self-signed certificate on a local network. You can safely proceed past the warning, or set up a local certificate authority (CA) to issue trusted certificates for your `nvr.local` domain — this is covered in a separate guide.
-
----
-
-## Troubleshooting
-
-**DNS not resolving on client devices**
-
-Make sure your client devices are actually using OPNsense as their DNS server. You can check this in your network settings — the DNS server listed should be your OPNsense LAN IP (commonly `192.168.1.1` or similar). If you are on a network using a different DNS server, OPNsense's host overrides won't apply.
-
-**nslookup resolves correctly but browser still shows a connection error**
-
-DNS is working but Caddy may not be running or may not be configured correctly. Check that the Caddy container is running in Portainer, and review the Caddy container logs for errors. See the Caddy Setup guide for details.
-
-**All three hostnames resolve to the right IP but only one service loads**
-
-This points to a Caddy configuration issue rather than a DNS issue. Double check that your Caddyfile has all three site blocks defined and that container names match exactly what is in your Docker Compose file.
-
-**Changes didn't take effect after clicking Apply**
-
-Try flushing the DNS cache on your client device. On Windows, run `ipconfig /flushdns` in Command Prompt. On macOS, run `sudo dscacheutil -flushcache`. On Linux, the command varies by distribution but is commonly `sudo systemd-resolve --flush-caches`.
+All five entries point to the **same IP address**. That's expected. Caddy listens on that machine and uses the hostname in the request to decide which service to forward to.
 
 ---
 
-## What's Next
+## Why `.internal`?
 
-With DNS set up, the next step is making sure Caddy is correctly configured to route traffic for all three hostnames to their respective containers over your Docker network. See the [Caddy Reverse Proxy Setup](caddy-reverse-proxy.md) guide for a walkthrough of the Docker Compose configuration and Caddyfile.
+`.internal` is reserved by ICANN specifically for private network use and will never be delegated as a public internet domain. That makes it the right choice for local DNS entries — it's guaranteed never to collide with a real website, and it's treated as ordinary DNS by every major platform: Windows, macOS, Linux, Android, and iOS all forward `.internal` queries to the configured DNS server without interception.
+
+The common alternative, `.local`, is reserved for mDNS (Bonjour/Avahi) and causes resolution failures or multi-second delays on Windows, macOS, and Linux systems where mDNS intercepts the query before it reaches OPNsense. `.internal` avoids that entirely.
+
+---
+
+## Step 1 — Confirm OPNsense is your network's DNS server
+
+Your devices need to ask OPNsense for DNS answers, otherwise the host overrides you create won't be used.
+
+In the OPNsense web interface, navigate to **Services**, then **Dnsmasq DNS & DHCP**, then **General**. Confirm that your **LAN** interface is listed under the selected interfaces — this is what tells OPNsense to hand out its own address as the DNS server to devices on that network via DHCP.
+
+![OPNsense Dnsmasq DNS & DHCP General page showing LAN as a selected interface](../assets/images/network/DHCPenableInterface.png){ width="800" }
+
+If you have devices with manually configured static IP addresses, make sure their DNS server is set to your OPNsense LAN IP as well. They won't pick up DNS settings from DHCP automatically.
+
+If you're running a separate DNS server on your network, such as Pi-hole, you'll need to add host overrides there instead of in OPNsense. This guide covers the OPNsense path specifically.
+
+---
+
+## Step 2 — Add host overrides in Unbound
+
+Navigate to **Services**, then **Unbound DNS**, then **Overrides**, then **Host Overrides**.
+
+You'll create five entries, one for each service hostname. For each entry, click **Add** and fill in the fields as shown below. Replace `192.168.1.100` with your NVR's actual static IP address.
+
+**Frigate**
+
+- **Host:** `frigate`
+- **Domain:** `internal`
+- **Type:** A (IPv4)
+- **IP:** `192.168.1.100`
+- **Description:** `Frigate via Caddy`
+
+**Portainer**
+
+- **Host:** `portainer`
+- **Domain:** `internal`
+- **Type:** A (IPv4)
+- **IP:** `192.168.1.100`
+- **Description:** `Portainer via Caddy`
+
+**Cockpit**
+
+- **Host:** `cockpit`
+- **Domain:** `internal`
+- **Type:** A (IPv4)
+- **IP:** `192.168.1.100`
+- **Description:** `Cockpit via Caddy`
+
+**ntfy**
+
+- **Host:** `ntfy`
+- **Domain:** `internal`
+- **Type:** A (IPv4)
+- **IP:** `192.168.1.100`
+- **Description:** `ntfy via Caddy`
+
+**Dozzle**
+
+- **Host:** `dozzle`
+- **Domain:** `internal`
+- **Type:** A (IPv4)
+- **IP:** `192.168.1.100`
+- **Description:** `Dozzle via Caddy`
+
+OPNsense combines the Host and Domain fields into the full hostname, so `frigate` plus `internal` becomes `frigate.internal`. Don't put the full hostname in the Host field.
+
+All five entries use the same IP address. That's not a mistake — Caddy handles routing from there.
+
+Click **Save**, then **Apply changes**.
+
+![OPNsense Unbound DNS Host Overrides list showing all five NVR service entries](../assets/images/network/UnboundDNSEntries.png){ width="800" }
+
+---
+
+## Step 3 — Verify Unbound is resolving your entries
+
+Before testing from another device, confirm OPNsense itself is returning the right answers.
+
+Navigate to **Services**, then **Unbound DNS**, then **Diagnostics**. Use the lookup tool to query each hostname:
+
+- `frigate.internal`
+- `portainer.internal`
+- `cockpit.internal`
+- `ntfy.internal`
+- `dozzle.internal`
+
+Each query should return your NVR's static IP address.
+
+If a lookup fails, double-check the Host and Domain fields in your overrides for typos. Also confirm Unbound is enabled under **Services**, then **Unbound DNS**, then **General**.
+
+---
+
+## Step 4 — Verify from a device on your network
+
+Test from a computer or phone connected to your main LAN.
+
+**Check name resolution**
+
+On Linux or Mac:
+
+```bash
+ping frigate.internal
+```
+
+On Windows:
+
+```powershell
+ping frigate.internal
+```
+
+The ping itself may or may not get a response depending on your firewall rules. What matters is that the hostname resolves to your NVR's IP address before the ping attempt starts.
+
+For a more explicit check, run:
+
+```bash
+nslookup frigate.internal
+```
+
+The server in the response should be your OPNsense LAN IP. The address returned should be your NVR's static IP. Repeat for all five hostnames.
+
+**Test in a browser (requires Caddy to be running)**
+
+If you've already completed the [Caddy reverse proxy guide](caddy-reverse-proxy.md), open a browser and navigate to each hostname:
+
+- `https://frigate.internal`
+- `https://portainer.internal`
+- `https://cockpit.internal`
+- `https://ntfy.internal`
+- `https://dozzle.internal`
+
+You'll likely see a certificate warning the first time you visit each one. That's expected and covered in the Caddy guide. The page loading at all confirms DNS is working.
+
+If Caddy isn't set up yet, you're done here. Move on to the Caddy guide next.
+
+**If something still isn't working**
+
+- The name resolves to the wrong address: the device may be using a different DNS server than OPNsense. Check its network settings or DHCP lease.
+- The name doesn't resolve at all: try disconnecting and reconnecting to your network to refresh DNS. On Android, check whether Private DNS is enabled.
+- The name resolves on one device but not another: see [Can't reach a service by hostname](../troubleshooting/hostname.md), especially the [Windows DNS troubleshooting](../troubleshooting/hostname.md#windows-dns-troubleshooting) section if the failing device is a Windows PC.
+- The name resolves but the page won't load: that's a Caddy or container issue, not DNS. See [Can't reach a service by hostname](../troubleshooting/hostname.md) or the troubleshooting section in the [Caddy guide](caddy-reverse-proxy.md).
+
+---
+
+## Camera VLAN DNS
+
+If you've set up a camera VLAN following the [OPNsense VLAN guide](vlan-opnsense.md), your cameras only need to reach the NVR by IP address. They don't need to resolve `frigate.internal` or the other service hostnames, and no separate DNS configuration is required on the camera VLAN for a standard LAN Foundry setup.
+
+Devices on your main LAN will pick up these DNS entries automatically through DHCP as long as OPNsense is their DNS server.
+
+---
+
+## Where to go from here
+
+With DNS entries in place, your network knows where to find the NVR when you use a service hostname.
+
+**Next in the stack**
+
+- [Configuring Caddy as a reverse proxy](caddy-reverse-proxy.md) — if you haven't set it up yet, this is the next guide
+- [Adding your first camera to Frigate](../cameras/first-camera.md) — once Caddy is running and your services are reachable
+
+**Network hardening (if not done yet)**
+
+- [Understanding network segmentation and VLANs](../privacy/blocking-telemetry.md)
+- [Setting up a camera VLAN in OPNsense](vlan-opnsense.md)
