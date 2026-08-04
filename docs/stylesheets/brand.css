@@ -81,6 +81,13 @@
   color: var(--md-accent-fg-color) !important;
 }
 
+/* "Foundry" in the header wordmark, matching the homepage's nav-logo
+   treatment. Span injected at runtime by javascripts/brand.js since
+   Material renders the header title as plain escaped text. */
+.lf-accent {
+  color: var(--md-accent-fg-color);
+}
+
 /* Page feedback form (overrides/partials/feedback.html) */
 .lf-feedback {
   margin-top: 2rem;

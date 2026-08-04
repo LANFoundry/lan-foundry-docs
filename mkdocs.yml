@@ -1,6 +1,11 @@
 site_name: LAN Foundry Docs
 site_description: Documentation for locally hosted networking and storage — starting with the Argus NVR. Free for everyone.
 site_author: LAN Foundry
+# Public URL is lanfoundry.com/docs/, reached via a Cloudflare Worker that
+# routes /docs* to this project's own Pages deployment — this repo has no
+# knowledge of that routing beyond this URL (used for sitemap.xml and
+# canonical link tags; internal nav links are already page-relative).
+site_url: https://lanfoundry.com/docs/
 
 # mkdocs serve only live-reloads docs_dir by default — without this, edits
 # under overrides/ (custom_dir) require a manual server restart to appear.
@@ -43,6 +48,9 @@ theme:
 
 extra_css:
   - stylesheets/brand.css
+
+extra_javascript:
+  - javascripts/brand.js
 
 plugins:
   - search
