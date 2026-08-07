@@ -10,4 +10,5 @@ Optional integrations and community resources after your Argus NVR is running re
 - **[Adding Home Assistant](home-assistant.md)** — Run Home Assistant alongside Frigate on the NVR or another host.
 - **[Frigate + Home Assistant](frigate-home-assistant.md)** — Expose Frigate cameras, events, and automations in Home Assistant.
 - **[Hardware potential](hardware-potential.md)** — What else the NVR hardware can run within sensible limits.
+- **[Running your own containers safely](container-networking.md)** — Keep containers you add off your LAN using Docker's internal networking, the same pattern Dozzle already uses.
 - **[Community resources](community.md)** — Frigate, OPNsense, and other forums and docs worth bookmarking.

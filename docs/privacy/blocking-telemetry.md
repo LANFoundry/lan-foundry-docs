@@ -98,3 +98,5 @@ Now that you understand what VLANs are and how they solve the problem of untrust
 - [Setting up a camera VLAN on other managed switches](../network/vlan-other-routers.md#part-2-switch-configuration)
 
 If you're setting up a camera network specifically, start with the router guide for your platform first. The switch configuration follows once your router has the VLAN defined.
+
+VLANs isolate devices on your physical network from each other. If you're adding your own containers to the NVR, [Running your own containers safely](../further/container-networking.md) covers the equivalent isolation at the Docker level.

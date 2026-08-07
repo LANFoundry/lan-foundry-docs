@@ -362,6 +362,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
+Notice there's no `ports:` line. Dozzle is only reachable through Caddy, by container name, over the shared `nvr-network`, not published to your LAN at all. That pattern is worth reusing for anything you add yourself; see [Running your own containers safely](further/container-networking.md).
+
 **Alternatives:**
 
 | Option | Trade-off |

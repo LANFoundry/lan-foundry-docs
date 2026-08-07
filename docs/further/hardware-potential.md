@@ -96,9 +96,12 @@ services:
 
 The exact configuration depends on the service. Refer to each project's Docker documentation for their specific compose snippet. Prefer `restart: unless-stopped` so services come back after an NVR reboot.
 
+AdGuard Home needs those published ports; it's a DNS server, so every device on your LAN has to reach it. Not everything does. See [Running your own containers safely](container-networking.md) before you publish ports out of habit for something that only needs to talk to one other container.
+
 ---
 
 ## Where to go from here
 
 - [Adding Home Assistant](home-assistant.md), to run local home automation alongside Frigate
+- [Running your own containers safely](container-networking.md), to keep whatever you add off your LAN unless it actually needs to be there
 - [Community resources](community.md), for links to self-hosted project communities and further reading

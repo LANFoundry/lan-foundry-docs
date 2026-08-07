@@ -128,4 +128,5 @@ nav:
     - Adding Home Assistant: further/home-assistant.md
     - Frigate + Home Assistant: further/frigate-home-assistant.md
     - Hardware potential: further/hardware-potential.md
+    - Running your own containers safely: further/container-networking.md
     - Community resources: further/community.md
