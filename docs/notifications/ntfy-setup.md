@@ -31,7 +31,7 @@ app:
   mode: events
 
 frigate:
-  server: http://frigate:5000
+  server: http://frigate.nvr-network:5000
   ignoressl: false
   webapi:
     enabled: true
@@ -170,7 +170,7 @@ app:
   mode: events
 
 frigate:
-  server: http://frigate:5000
+  server: http://frigate.nvr-network:5000
   ignoressl: false
   webapi:
     enabled: true

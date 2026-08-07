@@ -127,12 +127,12 @@ And the Caddyfile it mounts:
 
 frigate.internal {
   tls internal
-  reverse_proxy frigate:5000
+  reverse_proxy frigate.nvr-network:5000
 }
 
 portainer.internal {
   tls internal
-  reverse_proxy https://portainer:9443 {
+  reverse_proxy https://portainer.nvr-network:9443 {
     transport http {
       tls_insecure_skip_verify
     }
@@ -150,12 +150,12 @@ cockpit.internal {
 
 ntfy.internal {
   tls internal
-  reverse_proxy ntfy:80
+  reverse_proxy ntfy.nvr-network:80
 }
 
 dozzle.internal {
   tls internal
-  reverse_proxy dozzle:8080
+  reverse_proxy dozzle.nvr-network:8080
 }
 ```
 
@@ -251,7 +251,7 @@ app:
   mode: events
 
 frigate:
-  server: http://frigate:5000
+  server: http://frigate.nvr-network:5000
   ignoressl: false
   webapi:
     enabled: true
@@ -263,7 +263,7 @@ frigate:
 alerts:
   ntfy:
     enabled: true
-    server: http://ntfy:80
+    server: http://ntfy.nvr-network:80
     topic: your-topic-name
     ignoressl: false
 ```

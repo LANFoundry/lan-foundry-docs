@@ -19,17 +19,17 @@ This guide assumes:
 
 ## How it works
 
-Caddy runs as a container on the same Docker network as Frigate, Portainer, ntfy, and Dozzle. When a request comes in for `frigate.internal`, Caddy receives it and forwards it to the right container using the container name as the backend address. Frigate, ntfy, and Dozzle serve plain HTTP on the backend. Portainer and Cockpit already serve HTTPS with their own self-signed certificates, so Caddy proxies to them over HTTPS and skips backend certificate verification.
+Caddy runs as a container on the same Docker network as Frigate, Portainer, ntfy, and Dozzle. When a request comes in for `frigate.internal`, Caddy receives it and forwards it to the right container, addressed as `container.nvr-network` rather than just the bare container name. That fully-qualified form is what the config below actually uses; see [Running your own containers safely](../further/container-networking.md) for why. Frigate, ntfy, and Dozzle serve plain HTTP on the backend. Portainer and Cockpit already serve HTTPS with their own self-signed certificates, so Caddy proxies to them over HTTPS and skips backend certificate verification.
 
 Cockpit is the exception to the container pattern — it runs directly on the host rather than in Docker. Caddy reaches it through `host.docker.internal`, Docker's built-in address for reaching the host machine from inside a container.
 
 ```
 Your device
-    frigate.internal   → Caddy → frigate:5000            (HTTP)
-    portainer.internal → Caddy → portainer:9443           (HTTPS, skip verify)
-    cockpit.internal   → Caddy → host.docker.internal:9090 (HTTPS, skip verify)
-    ntfy.internal      → Caddy → ntfy:80                  (HTTP)
-    dozzle.internal    → Caddy → dozzle:8080              (HTTP)
+    frigate.internal   → Caddy → frigate.nvr-network:5000            (HTTP)
+    portainer.internal → Caddy → portainer.nvr-network:9443          (HTTPS, skip verify)
+    cockpit.internal   → Caddy → host.docker.internal:9090           (HTTPS, skip verify)
+    ntfy.internal      → Caddy → ntfy.nvr-network:80                 (HTTP)
+    dozzle.internal    → Caddy → dozzle.nvr-network:8080             (HTTP)
 ```
 
 ---
@@ -45,12 +45,12 @@ The Caddyfile on your NVR is located at `/opt/lanfoundry/config/caddy/Caddyfile`
 
 frigate.internal {
   tls internal
-  reverse_proxy frigate:5000
+  reverse_proxy frigate.nvr-network:5000
 }
 
 portainer.internal {
   tls internal
-  reverse_proxy https://portainer:9443 {
+  reverse_proxy https://portainer.nvr-network:9443 {
     transport http {
       tls_insecure_skip_verify
     }
@@ -68,12 +68,12 @@ cockpit.internal {
 
 ntfy.internal {
   tls internal
-  reverse_proxy ntfy:80
+  reverse_proxy ntfy.nvr-network:80
 }
 
 dozzle.internal {
   tls internal
-  reverse_proxy dozzle:8080
+  reverse_proxy dozzle.nvr-network:8080
 }
 ```
 
@@ -233,10 +233,10 @@ Then configure Caddy to route by path rather than hostname:
 nvr.local {
   tls internal
   handle /frigate* {
-    reverse_proxy frigate:5000
+    reverse_proxy frigate.nvr-network:5000
   }
   handle /portainer* {
-    reverse_proxy https://portainer:9443 {
+    reverse_proxy https://portainer.nvr-network:9443 {
       transport http {
         tls_insecure_skip_verify
       }
@@ -250,10 +250,10 @@ nvr.local {
     }
   }
   handle /ntfy* {
-    reverse_proxy ntfy:80
+    reverse_proxy ntfy.nvr-network:80
   }
   handle /dozzle* {
-    reverse_proxy dozzle:8080
+    reverse_proxy dozzle.nvr-network:8080
   }
 }
 ```

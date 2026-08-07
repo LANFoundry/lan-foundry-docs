@@ -34,7 +34,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
-No `ports:` key. Dozzle is reachable at `http://dozzle:8080` from Caddy, because both containers share the `nvr-network`, and from nothing else. Not your LAN, not the camera VLAN, nothing outside the Docker network. `https://dozzle.internal` works because Caddy is doing the reaching, not because Dozzle is exposed.
+No `ports:` key. Dozzle is reachable at `http://dozzle.nvr-network:8080` from Caddy, because both containers share the `nvr-network`, and from nothing else. Not your LAN, not the camera VLAN, nothing outside the Docker network. `https://dozzle.internal` works because Caddy is doing the reaching, not because Dozzle is exposed.
+
+**A note on short names versus fully-qualified names.** Docker resolves a container by its bare name (`dozzle`) when there's no ambiguity about which network to look on. In this stack, Caddy only ever joins `nvr-network`, so the bare name would work fine today, but every built-in Caddyfile entry uses the fully-qualified `container_name.network_name` form anyway. It costs nothing to write and it stops being ambiguous automatically if that ever changes, for example if a future service needs Caddy on a second network too. That's not guaranteed for a container connected to more than one network, or joined to a network after it was created (for example, using Portainer's "join network" on a container that's already running, instead of declaring the network in its original compose file), both of which are common for a third-party app you're adding on top of an existing stack. Use the fully-qualified form by default.
 
 ---
 
@@ -51,11 +53,11 @@ For anything a person needs to open in a browser, follow Dozzle's pattern:
 ```caddyfile
 myapp.internal {
   tls internal
-  reverse_proxy myapp:8080
+  reverse_proxy myapp.nvr-network:8080
 }
 ```
 
-Restart Caddy and the new hostname is live, with the container itself still invisible to everything except Caddy.
+The fully-qualified `myapp.nvr-network` form is worth using here specifically: Caddy itself doesn't join any other networks in this stack, so there's no ambiguity today, but it costs nothing to be explicit and it won't silently break if that ever changes. Restart Caddy and the new hostname is live, with the container itself still invisible to everything except Caddy.
 
 ### Fully internal, no browser access
 
@@ -86,7 +88,7 @@ networks:
     name: myapp_internal
 ```
 
-Neither service publishes a port. Neither joins `nvr-network`. They can reach each other by container name because they share `myapp_internal`, and nothing else on the host, or the LAN, can reach either one.
+Neither service publishes a port. Neither joins `nvr-network`. They can reach each other because they share `myapp_internal`, and nothing else on the host, or the LAN, can reach either one. If `orca-slicer-api` needs to call `bambu-studio-api`, address it as `bambu-studio-api.myapp_internal:3000` rather than the bare container name; this is where the fully-qualified form from the note above tends to matter most in practice.
 
 ---
 
