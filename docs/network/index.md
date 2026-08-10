@@ -17,3 +17,4 @@ Typical order for a new Argus install: camera VLAN on the router and switch, sta
 - **[Static IP assignment](static-ip.md)** — Give the NVR a fixed address so cameras and DNS always find it.
 - **[Camera VLAN on other Routers/Switches](vlan-other-routers.md)** — VLAN setup when you are not using OPNsense or TP-Link.
 - **[Remote access with Tailscale](tailscale.md)** — Reach the NVR securely from outside your home without opening ports.
+- **[Remote access with WireGuard](vpn-wireguard.md)** — A router-hosted alternative to Tailscale with no third-party dependency at all.

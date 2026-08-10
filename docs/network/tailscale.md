@@ -13,7 +13,7 @@ This guide assumes:
 - Your Argus NVR is running and you can SSH into it
 - You have a Tailscale account. The free tier supports up to 100 devices and covers personal use. Sign up at [tailscale.com](https://tailscale.com)
 
-**A note on privacy:** Tailscale's control plane (the system that authenticates devices and distributes keys) is hosted by Tailscale. They can see which devices are in your network, but not the traffic between them. That traffic travels peer-to-peer and is encrypted end-to-end. If fully self-hosted control plane matters to you, [Headscale](https://headscale.net) is an open-source alternative that runs on your own hardware.
+**A note on privacy:** Tailscale's control plane (the system that authenticates devices and distributes keys) is hosted by Tailscale. They can see which devices are in your network, but not the traffic between them. That traffic travels peer-to-peer and is encrypted end-to-end. If fully self-hosted control plane matters to you, [Headscale](https://headscale.net) is an open-source alternative that runs on your own hardware, or see [Remote access with WireGuard](vpn-wireguard.md) if your router already supports it directly.
 
 ---
 
