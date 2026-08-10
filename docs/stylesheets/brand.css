@@ -88,15 +88,20 @@
   color: var(--md-accent-fg-color);
 }
 
-/* Scroll cues for the section tabs bar (.md-tabs__list). Material hides
-   its native scrollbar entirely, so on a narrow window there's otherwise no
-   sign that tabs run off-screen. Injected as the first/last list items by
-   javascripts/brand.js; zero width so they don't shift tab spacing, with
-   the actual cue painted by an absolutely-positioned ::after: a two-stop
-   gradient (solid near the edge, fading toward the middle) wide enough to
-   read clearly, plus a copper chevron so the direction isn't ambiguous.
-   JS toggles .is-visible based on real scroll position, so a fade only
-   shows on the side that still has more to scroll. */
+/* Scroll cues and click-to-scroll buttons for the section tabs bar
+   (.md-tabs__list). Material hides its native scrollbar entirely, so on a
+   narrow window there's otherwise no sign that tabs run off-screen, and
+   no way to scroll it at all with a plain mouse (no horizontal wheel,
+   unlike a trackpad). Injected as the first/last list items by
+   javascripts/brand.js, which also wires up their click/keyboard handlers
+   and a wheel listener on the list itself; zero width here so they don't
+   shift tab spacing, with the actual cue painted by an absolutely-
+   positioned ::after: a two-stop gradient (solid near the edge, fading
+   toward the middle) wide enough to read clearly, plus a copper chevron so
+   the direction isn't ambiguous. JS toggles .is-visible based on real
+   scroll position and also drives aria-hidden/tabindex, so a fade is only
+   visible, clickable, and focusable on the side that still has more to
+   scroll. */
 .md-tabs__fade {
   position: sticky;
   top: 0;
@@ -146,7 +151,20 @@
     transparent 100%
   );
 }
+.md-tabs__fade.is-visible {
+  pointer-events: auto;
+  cursor: pointer;
+}
 .md-tabs__fade.is-visible::after { opacity: 1; }
+.md-tabs__fade.is-visible:hover::after,
+.md-tabs__fade.is-visible:focus-visible::after {
+  opacity: 1;
+  filter: brightness(1.25);
+}
+.md-tabs__fade:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: -2px;
+}
 
 /* Page feedback form (overrides/partials/feedback.html) */
 .lf-feedback {
