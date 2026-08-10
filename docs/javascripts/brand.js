@@ -75,3 +75,32 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", lfHandleFormspreeSubmit);
   }
 });
+
+// Fade cues on the section tabs bar when it's horizontally scrollable —
+// Material hides the native scrollbar entirely (.md-tabs__list), so on a
+// narrow window there's otherwise no sign that tabs run off-screen.
+document.addEventListener("DOMContentLoaded", () => {
+  const list = document.querySelector(".md-tabs__list");
+  if (!list) return;
+
+  const left = document.createElement("li");
+  left.className = "md-tabs__fade md-tabs__fade--left";
+  left.setAttribute("aria-hidden", "true");
+
+  const right = document.createElement("li");
+  right.className = "md-tabs__fade md-tabs__fade--right";
+  right.setAttribute("aria-hidden", "true");
+
+  list.insertBefore(left, list.firstChild);
+  list.appendChild(right);
+
+  function updateTabFades() {
+    const maxScroll = list.scrollWidth - list.clientWidth;
+    left.classList.toggle("is-visible", list.scrollLeft > 4);
+    right.classList.toggle("is-visible", list.scrollLeft < maxScroll - 4);
+  }
+
+  updateTabFades();
+  list.addEventListener("scroll", updateTabFades, { passive: true });
+  window.addEventListener("resize", updateTabFades);
+});

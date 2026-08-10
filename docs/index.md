@@ -15,7 +15,7 @@ These guides try to fill that gap in plain language.
 - **Your data stays yours.** Network isolation, local recording, and telemetry blocking should be normal steps, not expert-only hardening.
 - **Honest beats hype.** Local systems have real tradeoffs (setup time, remote access, drive maintenance). We say so upfront. See [Why a local security camera system?](privacy/why-local-nvr.md) for the surveillance-specific case.
 - **Help should not be gated.** You should not need a support contract to learn how a VLAN rule works. Argus customers get direct support when they need it; everyone else gets the same guides and paths to community resources.
-- **Plain language matters.** When CLI is the right tool (ZFS pool health, for example), we show the commands and explain what they mean.
+- **Plain language matters.** When CLI (Command Line Interface) is the right tool (ZFS pool health, for example), we show the commands and explain what they mean.
 
 This library is designed to stand on its own as well as support our product line. Many readers will never buy from us, and that's ok. These guides are still worth publishing.
 

@@ -46,6 +46,12 @@ theme:
     - search.suggest
     - content.code.copy
 
+# Overrides the logo/site-title link in the header, which Material otherwise
+# points at this docs site's own index page. Clicking the logo should go to
+# the main site, not "documentation home" — see nav below for that.
+extra:
+  homepage: https://lanfoundry.com/
+
 extra_css:
   - stylesheets/brand.css
 
@@ -70,7 +76,8 @@ markdown_extensions:
   - tables
 
 nav:
-  - Home: index.md
+  - Home: https://lanfoundry.com/
+  - Docs Home: index.md
   - The Stack: about-the-stack.md
   - Privacy & Security:
     - Overview: privacy/index.md

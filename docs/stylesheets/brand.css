@@ -88,6 +88,66 @@
   color: var(--md-accent-fg-color);
 }
 
+/* Scroll cues for the section tabs bar (.md-tabs__list). Material hides
+   its native scrollbar entirely, so on a narrow window there's otherwise no
+   sign that tabs run off-screen. Injected as the first/last list items by
+   javascripts/brand.js; zero width so they don't shift tab spacing, with
+   the actual cue painted by an absolutely-positioned ::after: a two-stop
+   gradient (solid near the edge, fading toward the middle) wide enough to
+   read clearly, plus a copper chevron so the direction isn't ambiguous.
+   JS toggles .is-visible based on real scroll position, so a fade only
+   shows on the side that still has more to scroll. */
+.md-tabs__fade {
+  position: sticky;
+  top: 0;
+  flex: 0 0 0;
+  width: 0;
+  list-style: none;
+  pointer-events: none;
+  z-index: 1;
+}
+.md-tabs__fade::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  color: var(--md-accent-fg-color);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.md-tabs__fade--left { left: 0; }
+.md-tabs__fade--left::after {
+  content: "‹";
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 0.4rem;
+  background: linear-gradient(
+    to right,
+    var(--md-primary-fg-color) 0%,
+    var(--md-primary-fg-color) 45%,
+    transparent 100%
+  );
+}
+.md-tabs__fade--right { right: 0; }
+.md-tabs__fade--right::after {
+  content: "›";
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 0.4rem;
+  background: linear-gradient(
+    to left,
+    var(--md-primary-fg-color) 0%,
+    var(--md-primary-fg-color) 45%,
+    transparent 100%
+  );
+}
+.md-tabs__fade.is-visible::after { opacity: 1; }
+
 /* Page feedback form (overrides/partials/feedback.html) */
 .lf-feedback {
   margin-top: 2rem;
