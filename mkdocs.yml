@@ -74,6 +74,15 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - tables
+  # Acronym glossary: definitions live in includes/abbreviations.md (outside
+  # docs_dir, so it's never built as its own page) and get appended to every
+  # page at build time. `abbr` (Python-Markdown core, not a pymdownx
+  # extension) then wraps any matching term in <abbr title="..."> for a
+  # hover/tap tooltip, defined once, applies everywhere automatically.
+  - abbr
+  - pymdownx.snippets:
+      auto_append:
+        - includes/abbreviations.md
 
 nav:
   - Home: https://lanfoundry.com/
@@ -94,6 +103,7 @@ nav:
     - Static IP assignment: network/static-ip.md
     - Camera VLAN on other Routers/Switches: network/vlan-other-routers.md
     - Remote access with Tailscale: network/tailscale.md
+    - Remote access with WireGuard: network/vpn-wireguard.md
   - Camera Setup:
     - Overview: cameras/index.md
     - Adding your first camera: cameras/first-camera.md

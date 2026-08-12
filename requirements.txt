@@ -1,3 +1,8 @@
 mkdocs
 mkdocs-material
 mkdocs-glightbox
+# Listed explicitly since mkdocs.yml names pymdownx.snippets directly
+# (used for the acronym glossary's auto_append) — otherwise it's only
+# present as mkdocs-material's transitive dependency, which is normally
+# fine on a fresh install but left us exposed to a stale local copy once.
+pymdown-extensions
