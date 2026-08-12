@@ -2,10 +2,10 @@
 
 LAN Foundry is a **systems integrator for locally hosted networking and storage** — infrastructure you own and control, not capacity you rent from someone else's cloud. **Argus**, our local NVR for security cameras, is the first product we are shipping; it is a focused starting point, not the limit of what we build.
 
-This site documents that stack: network segmentation, Frigate, ZFS storage, maintenance, and troubleshooting. Everything here is **free to read and use**, whether you bought Argus from us or run your own hardware.
+This site documents that stack: network segmentation, Frigate, ZFS storage, maintenance, and troubleshooting. Everything here is **free to read and use**, whether you buy a system from us or run your own hardware.
 
 !!! tip "Not sure what an acronym means?"
-    Terms like NVR, VLAN, and ONVIF are underlined with dots throughout these guides. Tap or hover on one for a quick definition, no need to leave the page to look it up.
+    Acronyms like NVR, VLAN, and ONVIF are underlined with dots throughout these guides. If you are unsure what they mean, tap on or hover over one for a quick definition.
 
 ---
 
