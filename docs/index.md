@@ -4,6 +4,9 @@ LAN Foundry is a **systems integrator for locally hosted networking and storage*
 
 This site documents that stack: network segmentation, Frigate, ZFS storage, maintenance, and troubleshooting. Everything here is **free to read and use**, whether you bought Argus from us or run your own hardware.
 
+!!! tip "Not sure what an acronym means?"
+    Terms like NVR, VLAN, and ONVIF are underlined with dots throughout these guides. Tap or hover on one for a quick definition, no need to leave the page to look it up.
+
 ---
 
 ## Why we publish

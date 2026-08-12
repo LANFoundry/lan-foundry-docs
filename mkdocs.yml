@@ -45,6 +45,11 @@ theme:
     - search.highlight
     - search.suggest
     - content.code.copy
+    # Replaces native title-attribute tooltips (what plain <abbr> relies on)
+    # with Material's own tap-friendly version — the browser-native kind
+    # has no touch equivalent, so abbreviations (includes/abbreviations.md)
+    # were unreachable on mobile without this.
+    - content.tooltips
 
 # Overrides the logo/site-title link in the header, which Material otherwise
 # points at this docs site's own index page. Clicking the logo should go to

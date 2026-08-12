@@ -409,7 +409,7 @@ With no auth key, the container runs but never joins a network. To activate it, 
 docker exec tailscale tailscale up
 ```
 
-This is the option for customers without router-level VPN — it's not a replacement for VLAN segmentation at the network edge. See [OPNsense](#opnsense--firewall-and-router) below for the more capable router-based approach.
+This is the option for customers without router-level VPN — it's not a replacement for VLAN segmentation at the network edge. See [OPNsense](#opnsense-firewall-and-router) below for the more capable router-based approach.
 
 **Alternatives:**
 

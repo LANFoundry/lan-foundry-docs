@@ -1,38 +1,36 @@
-*[NVR]: Network Video Recorder
-*[VLAN]: Virtual Local Area Network
-*[LAN]: Local Area Network
-*[WAN]: Wide Area Network
-*[DNS]: Domain Name System
-*[DHCP]: Dynamic Host Configuration Protocol
-*[RTSP]: Real Time Streaming Protocol
-*[URL]: Uniform Resource Locator
-*[UI]: User Interface
-*[SSH]: Secure Shell
-*[CPU]: Central Processing Unit
-*[ONVIF]: Open Network Video Interface Forum
-*[RAID]: Redundant Array of Independent Disks
-*[PVID]: Port VLAN ID
-*[VPN]: Virtual Private Network
-*[OS]: Operating System
-*[NAS]: Network Attached Storage
+*[AI]: Artificial Intelligence
+*[API]: Application Programming Interface
+*[CKSUM]: Checksum
 *[CLI]: Command Line Interface
-*[YAML]: YAML Ain't Markup Language
+*[CPU]: Central Processing Unit
+*[DHCP]: Dynamic Host Configuration Protocol
+*[DIY]: Do It Yourself
+*[DNS]: Domain Name System
+*[HA]: Home Assistant
+*[HACS]: Home Assistant Community Store
+*[HDD]: Hard Disk Drive
 *[HTTP]: Hypertext Transfer Protocol
 *[HTTPS]: Hypertext Transfer Protocol Secure
-*[HDD]: Hard Disk Drive
-*[UDP]: User Datagram Protocol
-*[TCP]: Transmission Control Protocol
-*[AI]: Artificial Intelligence
-*[HA]: Home Assistant
-*[API]: Application Programming Interface
-*[SMART]: Self-Monitoring, Analysis, and Reporting Technology
-*[MQTT]: Message Queuing Telemetry Transport
-*[MAC]: Media Access Control
 *[ISP]: Internet Service Provider
-*[DIY]: Do It Yourself
-*[USB]: Universal Serial Bus
-*[TLS]: Transport Layer Security
-*[SMTP]: Simple Mail Transfer Protocol
+*[MAC]: Media Access Control
+*[MQTT]: Message Queuing Telemetry Transport
+*[NAS]: Network Attached Storage
+*[NVR]: Network Video Recorder
+*[ONVIF]: Open Network Video Interface Forum
+*[OS]: Operating System
 *[OSD]: On-Screen Display
-*[HACS]: Home Assistant Community Store
-*[CKSUM]: Checksum
+*[PVID]: Port VLAN ID
+*[RAID]: Redundant Array of Independent Disks
+*[RTSP]: Real Time Streaming Protocol
+*[SMART]: Self-Monitoring, Analysis, and Reporting Technology
+*[SMTP]: Simple Mail Transfer Protocol
+*[SSH]: Secure Shell
+*[TCP]: Transmission Control Protocol
+*[TLS]: Transport Layer Security
+*[UDP]: User Datagram Protocol
+*[UI]: User Interface
+*[USB]: Universal Serial Bus
+*[VLAN]: Virtual Local Area Network
+*[VPN]: Virtual Private Network
+*[WAN]: Wide Area Network
+*[YAML]: YAML Ain't Markup Language
