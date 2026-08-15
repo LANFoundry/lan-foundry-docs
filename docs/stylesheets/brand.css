@@ -9,11 +9,16 @@
   --md-default-fg-color--lighter: #E2E5E8;
   --md-default-fg-color--lightest: #E2E5E8;
 
-  --md-primary-fg-color: #14191F;
-  --md-primary-fg-color--light: #313942;
-  --md-primary-fg-color--dark: #14191F;
-  --md-primary-bg-color: #F7F9FB;
-  --md-primary-bg-color--light: #F7F9FB;
+  /* Header/tabs bar now follows scheme like the homepage does, instead of
+     staying Ink in both modes: Paper background with Ink text/icons here,
+     mirrored (Ink background, Paper text) in the slate block below. The
+     logo swaps to its dark-on-light variant for the same reason, see the
+     [data-md-color-scheme="default"] .md-logo img rule further down. */
+  --md-primary-fg-color: #F7F9FB;
+  --md-primary-fg-color--light: #E2E5E8;
+  --md-primary-fg-color--dark: #F7F9FB;
+  --md-primary-bg-color: #14191F;
+  --md-primary-bg-color--light: #313942;
 
   --md-accent-fg-color: #DC701C;
   --md-accent-fg-color--transparent: #DC701C1a;
@@ -27,10 +32,12 @@
   --md-code-bg-color: #E2E5E8;
   --md-code-fg-color: #14191F;
 
-  --md-footer-bg-color: #14191F;
-  --md-footer-bg-color--dark: #14191F;
-  --md-footer-fg-color: #F7F9FB;
-  --md-footer-fg-color--light: #E2E5E8;
+  /* Same reasoning as --md-primary-fg-color above: follows scheme instead
+     of staying Ink in both modes. */
+  --md-footer-bg-color: #F7F9FB;
+  --md-footer-bg-color--dark: #E2E5E8;
+  --md-footer-fg-color: #14191F;
+  --md-footer-fg-color--light: #313942;
 }
 
 [data-md-color-scheme="slate"] {
@@ -86,6 +93,16 @@
    Material renders the header title as plain escaped text. */
 .lf-accent {
   color: var(--md-accent-fg-color);
+}
+
+/* The header/tabs bar is now Paper in light mode (see --md-primary-fg-color
+   above), so the light-on-dark logo mark would go nearly invisible there.
+   Swap to the dark-on-light variant per scheme via the data attribute
+   Material's palette toggle actually sets, not a prefers-color-scheme media
+   query, so this tracks the in-page toggle correctly, not just system
+   preference. */
+[data-md-color-scheme="default"] .md-logo img {
+  content: url("../assets/branding/logo-mark-on-light.svg");
 }
 
 /* Scroll cues and click-to-scroll buttons for the section tabs bar
