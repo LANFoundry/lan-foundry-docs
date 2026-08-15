@@ -95,6 +95,28 @@
   color: var(--md-accent-fg-color);
 }
 
+/* Abbreviation/footnote tooltips (content.tooltips, includes/abbreviations.md).
+   Confirmed via DevTools against the actual installed mkdocs-material
+   version: the real class is md-tooltip2__inner (a newer tooltip component
+   revision), not md-tooltip__inner as older Material versions/docs
+   reference — that mismatch is why earlier attempts at this rule matched
+   nothing at all. Covers both class names and their inline-variant
+   compounds so this doesn't silently break again on a version bump either
+   direction. font-size needs !important: the winning rule turned out to be
+   an attribute selector, [role="tooltip"] { font-size: .5rem }, equal
+   specificity to a plain class selector, and it kept winning ties even
+   after matching specificity, most likely because Material injects part of
+   the tooltip component's CSS at runtime via JS, after this static
+   stylesheet has already loaded, so load order (not specificity) was
+   deciding it. */
+.md-tooltip__inner,
+.md-tooltip--inline .md-tooltip__inner,
+.md-tooltip2__inner,
+.md-tooltip2--inline .md-tooltip2__inner {
+  font-size: 0.8rem !important;
+  padding: 0.6rem 0.8rem;
+}
+
 /* The header/tabs bar is now Paper in light mode (see --md-primary-fg-color
    above), so the light-on-dark logo mark would go nearly invisible there.
    Swap to the dark-on-light variant per scheme via the data attribute
