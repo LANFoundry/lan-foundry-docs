@@ -113,8 +113,34 @@
 .md-tooltip--inline .md-tooltip__inner,
 .md-tooltip2__inner,
 .md-tooltip2--inline .md-tooltip2__inner {
-  font-size: 0.8rem !important;
-  padding: 0.6rem 0.8rem;
+  font-size: 0.72rem !important;
+  padding: 0.5rem 0.7rem;
+}
+
+/* Inverted from the page, not matching it, so the tooltip pops as a
+   distinct floating surface: --md-primary-bg-color/--md-primary-fg-color
+   are already exact opposites of each other in both schemes (light mode:
+   fg-color = Paper = the page background, bg-color = Ink; dark mode is the
+   reverse), so this just cross-wires those same two tokens rather than
+   inventing new colors.
+
+   Overriding the design-token variables the tooltip component itself
+   almost certainly reads, instead of fighting its own background-color/
+   color rules directly with !important: two direct-property attempts
+   still lost (font-size needed !important to win a specificity/load-order
+   fight; background-color didn't win even with !important, and a bare
+   .md-tooltip2 selector also matched some other, normally-invisible
+   element and painted a stray bar across the page). Scoping the override
+   to these variables instead only affects elements that actually consume
+   them, which is both more surgical (no collateral damage on unrelated
+   elements) and wins automatically without needing to out-specificity
+   anything, since the component reads whatever value is in scope for it.
+   .md-typeset (present on .md-tooltip2__inner) uses --md-typeset-color
+   for its own text, covered here too. */
+.md-tooltip2 {
+  --md-default-bg-color: var(--md-primary-bg-color);
+  --md-default-fg-color: var(--md-primary-fg-color);
+  --md-typeset-color: var(--md-primary-fg-color);
 }
 
 /* The header/tabs bar is now Paper in light mode (see --md-primary-fg-color
