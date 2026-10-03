@@ -12,9 +12,9 @@ All of the Argus services run as Docker containers on the NVR host. This is wort
 
 **Clean updates.** Updating a service means pulling a new container image and restarting one container. The host OS and every other service keep running. Rolling back is equally simple: point the container at an older image tag.
 
-**Reproducibility.** LAN Foundry ships Argus systems with the full stack already running and configured. Docker makes it possible to produce the same environment every time, on every system, without manual steps that could vary.
+**Reproducibility.** LAN Foundry ships Argus systems with the full stack installed and running, ready for you to finish configuring for your network and devices. Docker makes it possible to produce the same environment every time, on every system, without manual steps that could vary.
 
-**Separation of data from software.** Configuration and recorded footage live in named Docker volumes, separate from the container images. When you update Frigate, your recordings and config stay untouched because they're not inside the container.
+**Separation of data from software.** Configuration lives in folders on the host under `/opt/lanfoundry/config/`, and recorded footage lives on the recording pool, both mounted into the containers rather than stored inside them. When you update Frigate, your recordings and config stay untouched because they're not inside the container.
 
 The main tradeoff is a layer of abstraction to learn. When something goes wrong, you're checking container logs and Docker networks rather than system logs directly. That's why Portainer and Dozzle are in the stack; they make that layer navigable without living in the terminal.
 
@@ -30,33 +30,34 @@ Frigate handles everything camera-related: ingesting RTSP streams, running objec
 
 This is roughly what the Frigate service looks like in our Docker Compose stack. `shm_size` scales with camera count and resolution; the device passthrough lines only apply if you're using Hailo acceleration:
 
-```yaml
-services:
-  frigate:
-    container_name: frigate
-    image: ghcr.io/blakeblackshear/frigate:stable
-    restart: unless-stopped
-    networks:
-      - nvr-network
-    shm_size: "256mb"          # scale up with camera count/resolution
-    ports:
-      - "5000:5000"            # web UI / API
-      - "8554:8554"            # RTSP restream
-      - "8555:8555/tcp"        # WebRTC
-      - "8555:8555/udp"
-    environment:
-      FRIGATE_RTSP_PASSWORD: "change-me"
-    volumes:
-      - /opt/lanfoundry/config/frigate:/config
-      - /mnt/recordings:/media/frigate
-      - type: tmpfs
-        target: /tmp/cache
-        tmpfs:
-          size: 1000000000
-    # devices:                 # uncomment for Hailo/iGPU passthrough
-    #   - /dev/hailo0:/dev/hailo0
-    #   - /dev/dri:/dev/dri
-```
+??? note "Frigate's Docker Compose service"
+    ```yaml
+    services:
+      frigate:
+        container_name: frigate
+        image: ghcr.io/blakeblackshear/frigate:stable
+        restart: unless-stopped
+        networks:
+          - nvr-network
+        shm_size: "256mb"          # scale up with camera count/resolution
+        ports:
+          - "5000:5000"            # web UI / API
+          - "8554:8554"            # RTSP restream
+          - "8555:8555/tcp"        # WebRTC
+          - "8555:8555/udp"
+        environment:
+          FRIGATE_RTSP_PASSWORD: "change-me"
+        volumes:
+          - /opt/lanfoundry/config/frigate:/config
+          - /mnt/recordings:/media/frigate
+          - type: tmpfs
+            target: /tmp/cache
+            tmpfs:
+              size: 1000000000
+        # devices:                 # uncomment for Hailo/iGPU passthrough
+        #   - /dev/hailo0:/dev/hailo0
+        #   - /dev/dri:/dev/dri
+    ```
 
 **Alternatives:**
 
@@ -95,69 +96,71 @@ Caddy sits in front of all the services and routes requests to them by hostname.
 
 The Caddy service in the stack:
 
-```yaml
-services:
-  caddy:
-    container_name: caddy
-    image: caddy:2-alpine
-    restart: unless-stopped
-    networks:
-      - nvr-network
-    depends_on:
-      - frigate
-      - ntfy
-      - dozzle
-    ports:
-      - "80:80"
-      - "443:443"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - /opt/lanfoundry/config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-```
+??? note "Caddy's Docker Compose service"
+    ```yaml
+    services:
+      caddy:
+        container_name: caddy
+        image: caddy:2-alpine
+        restart: unless-stopped
+        networks:
+          - nvr-network
+        depends_on:
+          - frigate
+          - ntfy
+          - dozzle
+        ports:
+          - "80:80"
+          - "443:443"
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        volumes:
+          - /opt/lanfoundry/config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+          - caddy-data:/data
+          - caddy-config:/config
+    ```
 
 And the Caddyfile it mounts:
 
-```caddyfile
-{
-  local_certs
-}
-
-frigate.internal {
-  tls internal
-  reverse_proxy frigate.nvr-network:5000
-}
-
-portainer.internal {
-  tls internal
-  reverse_proxy https://portainer.nvr-network:9443 {
-    transport http {
-      tls_insecure_skip_verify
+??? note "The Caddyfile"
+    ```caddyfile
+    {
+      local_certs
     }
-  }
-}
 
-cockpit.internal {
-  tls internal
-  reverse_proxy https://host.docker.internal:9090 {
-    transport http {
-      tls_insecure_skip_verify
+    frigate.internal {
+      tls internal
+      reverse_proxy frigate.nvr-network:5000
     }
-  }
-}
 
-ntfy.internal {
-  tls internal
-  reverse_proxy ntfy.nvr-network:80
-}
+    portainer.internal {
+      tls internal
+      reverse_proxy https://portainer.nvr-network:9443 {
+        transport http {
+          tls_insecure_skip_verify
+        }
+      }
+    }
 
-dozzle.internal {
-  tls internal
-  reverse_proxy dozzle.nvr-network:8080
-}
-```
+    cockpit.internal {
+      tls internal
+      reverse_proxy https://host.docker.internal:9090 {
+        transport http {
+          tls_insecure_skip_verify
+        }
+      }
+    }
+
+    ntfy.internal {
+      tls internal
+      reverse_proxy ntfy.nvr-network:80
+    }
+
+    dozzle.internal {
+      tls internal
+      reverse_proxy dozzle.nvr-network:8080
+    }
+    ```
 
 **Alternatives:**
 
@@ -174,40 +177,43 @@ dozzle.internal {
 
 ntfy is a self-hosted push notification server. When frigate-notify sends it a notification, ntfy queues it and delivers it to subscribed devices: your phone, a browser tab, anything running the ntfy app or subscribed via the API.
 
-**Why ntfy:** It requires no account, no third-party service, and no ongoing subscription. You run it, you control it. It has well-maintained apps for iOS and Android. On Android, it supports UnifiedPush, which routes notifications entirely within your own infrastructure without passing through Google's servers. For iOS, notifications must transit Apple's servers regardless of what notification service you use. This is an Apple platform constraint, not an ntfy limitation.
+**Why ntfy:** It requires no account, no third-party service, and no ongoing subscription. You run it, you control it. It has well-maintained apps for iOS and Android. On Android, it supports UnifiedPush, which routes notifications entirely within your own infrastructure without passing through Google's servers. For iOS, notifications must transit Apple's servers regardless of what notification service you use, an Apple platform constraint that applies to any self-hosted push service.
 
 The ntfy service:
 
-```yaml
-services:
-  ntfy:
-    container_name: ntfy
-    image: binwiederhier/ntfy:latest
-    restart: unless-stopped
-    networks:
-      - nvr-network
-    ports:
-      - "2586:80"
-    volumes:
-      - ntfy-cache:/var/cache/ntfy
-      - /opt/lanfoundry/config/ntfy:/etc/ntfy:ro
-    command: serve
-```
- And its server config:
+??? note "ntfy's Docker Compose service"
+    ```yaml
+    services:
+      ntfy:
+        container_name: ntfy
+        image: binwiederhier/ntfy:latest
+        restart: unless-stopped
+        networks:
+          - nvr-network
+        ports:
+          - "2586:80"
+        volumes:
+          - ntfy-cache:/var/cache/ntfy
+          - /opt/lanfoundry/config/ntfy:/etc/ntfy:ro
+        command: serve
+    ```
 
-```yaml
-# ntfy server.yml
-# Upstream relay to ntfy.sh is intentionally disabled for privacy-first
-# operation — notifications never leave your network by default. To enable
-# remote push later (notification text transits ntfy.sh), add:
-#   upstream-base-url: "https://ntfy.sh"
-# then restart the ntfy container.
+And its server config — notice the upstream relay to `ntfy.sh` is disabled by default, so notifications never leave your network unless you opt in:
 
-base-url: https://ntfy.internal
-attachment-cache-dir: /var/cache/ntfy/attachments
-attachment-total-size-limit: 5G
-attachment-file-size-limit: 15M
-```
+??? note "ntfy's server.yml"
+    ```yaml
+    # ntfy server.yml
+    # Upstream relay to ntfy.sh is intentionally disabled for privacy-first
+    # operation — notifications never leave your network by default. To enable
+    # remote push later (notification text transits ntfy.sh), add:
+    #   upstream-base-url: "https://ntfy.sh"
+    # then restart the ntfy container.
+
+    base-url: https://ntfy.internal
+    attachment-cache-dir: /var/cache/ntfy/attachments
+    attachment-total-size-limit: 5G
+    attachment-file-size-limit: 15M
+    ```
 
 **Alternatives:**
 
@@ -229,44 +235,47 @@ frigate-notify runs alongside Frigate and bridges its event API to notification 
 
 The frigate-notify service:
 
-```yaml
-services:
-  frigate-notify:
-    container_name: frigate-notify
-    image: ghcr.io/0x2142/frigate-notify:latest
-    restart: unless-stopped
-    networks:
-      - nvr-network
-    depends_on:
-      - frigate
-      - ntfy
-    volumes:
-      - /opt/lanfoundry/config/frigate-notify/config.yml:/app/config.yml:ro
-```
- And its config, wired to ntfy by default:
+??? note "frigate-notify's Docker Compose service"
+    ```yaml
+    services:
+      frigate-notify:
+        container_name: frigate-notify
+        image: ghcr.io/0x2142/frigate-notify:latest
+        restart: unless-stopped
+        networks:
+          - nvr-network
+        depends_on:
+          - frigate
+          - ntfy
+        volumes:
+          - /opt/lanfoundry/config/frigate-notify/config.yml:/app/config.yml:ro
+    ```
 
-```yaml
-# frigate-notify config.yml
-app:
-  mode: events
+And its config, wired to ntfy by default:
 
-frigate:
-  server: http://frigate.nvr-network:5000
-  ignoressl: false
-  webapi:
-    enabled: true
-    interval: 30
-  startup_check:
-    attempts: 5
-    interval: 30
+??? note "frigate-notify's config.yml"
+    ```yaml
+    # frigate-notify config.yml
+    app:
+      mode: events
 
-alerts:
-  ntfy:
-    enabled: true
-    server: http://ntfy.nvr-network:80
-    topic: your-topic-name
-    ignoressl: false
-```
+    frigate:
+      server: http://frigate.nvr-network:5000
+      ignoressl: false
+      webapi:
+        enabled: true
+        interval: 30
+      startup_check:
+        attempts: 5
+        interval: 30
+
+    alerts:
+      ntfy:
+        enabled: true
+        server: http://ntfy.nvr-network:80
+        topic: your-topic-name
+        ignoressl: false
+    ```
 
 Other providers (Discord, Gotify, Pushover, Telegram, SMTP, and more) can be enabled alongside or instead of ntfy — see the [frigate-notify docs](https://github.com/0x2142/frigate-notify) for the full provider list.
 
@@ -285,31 +294,32 @@ Other providers (Discord, Gotify, Pushover, Telegram, SMTP, and more) can be ena
 
 Portainer is a web UI for managing Docker. It shows running containers, lets you start and stop services, browse volume contents, view logs, and manage Docker Compose stacks, all from a browser rather than the command line.
 
-**Why Portainer:** It makes the Docker layer navigable for people who aren't comfortable with the CLI. Being able to restart a container, browse a config volume, or check container status in a browser without SSH access significantly lowers the barrier for day-to-day management. It's also how we recommend editing configuration files; Portainer's volume browser handles this without requiring SSH or `docker exec`.
+**Why Portainer:** It makes the Docker layer navigable for people who aren't comfortable with the CLI. Being able to restart a container, browse a config volume, or check container status in a browser without SSH access significantly lowers the barrier for day-to-day management. Most service configuration files live on the host under `/opt/lanfoundry/config/` and are mounted read-only into their containers, so you edit them on the host over SSH, then restart the container from Portainer or the command line.
 
-Portainer is bootstrapped first, before the rest of the stack, so it can then deploy everything else as a managed stack:
+Portainer is bootstrapped first, before the rest of the stack, so it can then deploy everything else as a managed stack. This is also where the shared `nvr-network` every other service's Compose block references gets defined:
 
-```yaml
-services:
-  portainer:
-    container_name: portainer
-    image: portainer/portainer-ce:lts
-    restart: always
+??? note "Portainer's Docker Compose service"
+    ```yaml
+    services:
+      portainer:
+        container_name: portainer
+        image: portainer/portainer-ce:lts
+        restart: always
+        networks:
+          - nvr-network
+        ports:
+          - "9443:9443"
+          - "8000:8000"
+        command: --no-setup-token
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - portainer_data:/data
+
     networks:
-      - nvr-network
-    ports:
-      - "9443:9443"
-      - "8000:8000"
-    command: --no-setup-token
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-
-networks:
-  nvr-network:
-    name: nvr-network
-    external: true
-```
+      nvr-network:
+        name: nvr-network
+        external: true
+    ```
 
 **Alternatives:**
 
@@ -346,21 +356,22 @@ Dozzle is a real-time Docker log viewer. It streams logs from all running contai
 
 **Why Dozzle:** The most common reason to look at logs is to diagnose something that just went wrong. Dozzle makes that instant: open `https://dozzle.internal`, log in, click a container, and watch the logs live. It's read-only, stateless, and adds no meaningful overhead. It covers the 90% of log-checking cases that don't require log retention or search. It ships behind basic auth by default, since raw container logs can include IPs and other operational details you may not want open to anyone on the LAN.
 
-```yaml
-services:
-  dozzle:
-    container_name: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    networks:
-      - nvr-network
-    environment:
-      DOZZLE_NO_ANALYTICS: "true"
-      DOZZLE_USERNAME: admin
-      DOZZLE_PASSWORD: "change-me"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-```
+??? note "Dozzle's Docker Compose service"
+    ```yaml
+    services:
+      dozzle:
+        container_name: dozzle
+        image: amir20/dozzle:latest
+        restart: unless-stopped
+        networks:
+          - nvr-network
+        environment:
+          DOZZLE_NO_ANALYTICS: "true"
+          DOZZLE_USERNAME: admin
+          DOZZLE_PASSWORD: "change-me"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+    ```
 
 Notice there's no `ports:` line. Dozzle is only reachable through Caddy, by container name, over the shared `nvr-network`, not published to your LAN at all. That pattern is worth reusing for anything you add yourself; see [Running your own containers safely](further/container-networking.md).
 
@@ -382,26 +393,27 @@ Tailscale is included in the stack but inactive by default. It's the answer for 
 
 The container ships without a pre-auth key, so it sits idle until you opt in:
 
-```yaml
-services:
-  tailscale:
-    container_name: tailscale
-    image: tailscale/tailscale:stable
-    restart: unless-stopped
-    network_mode: host
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      TS_HOSTNAME: "argus-nvr"
-      TS_STATE_DIR: /var/lib/tailscale
-      TS_USERSPACE: "false"
-      TS_AUTHKEY: ""        # blank = inactive until you authenticate
-    volumes:
-      - tailscale-state:/var/lib/tailscale
-```
+??? note "Tailscale's Docker Compose service"
+    ```yaml
+    services:
+      tailscale:
+        container_name: tailscale
+        image: tailscale/tailscale:stable
+        restart: unless-stopped
+        network_mode: host
+        cap_add:
+          - NET_ADMIN
+          - NET_RAW
+        devices:
+          - /dev/net/tun:/dev/net/tun
+        environment:
+          TS_HOSTNAME: "argus-nvr"
+          TS_STATE_DIR: /var/lib/tailscale
+          TS_USERSPACE: "false"
+          TS_AUTHKEY: ""        # blank = inactive until you authenticate
+        volumes:
+          - tailscale-state:/var/lib/tailscale
+    ```
 
 With no auth key, the container runs but never joins a network. To activate it, either pass a pre-auth key generated from the [Tailscale admin console](https://login.tailscale.com/admin/machines) at install time, or authenticate manually after the fact:
 
@@ -409,7 +421,7 @@ With no auth key, the container runs but never joins a network. To activate it, 
 docker exec tailscale tailscale up
 ```
 
-This is the option for customers without router-level VPN — it's not a replacement for VLAN segmentation at the network edge. See [OPNsense](#opnsense-firewall-and-router) below for the more capable router-based approach.
+This is the option for customers without router-level VPN. See [OPNsense](#opnsense-firewall-and-router) below for the more capable router-based approach.
 
 **Alternatives:**
 
@@ -458,7 +470,7 @@ The guides on this site describe the default Argus configuration. Where an alter
 
 ## Where to go from here
 
-- [Setting up network segmentation and VLANs](privacy/blocking-telemetry.md) — the network layer the stack runs on
+- [Understanding network segmentation and VLANs](privacy/blocking-telemetry.md) — the network layer the stack runs on
 - [Configuring Caddy as a reverse proxy](network/caddy-reverse-proxy.md) — how hostname routing works
 - [Setting up push notifications](notifications/ntfy-setup.md) — the Frigate → frigate-notify → ntfy chain in detail
 - [Going Further](further/index.md) — Home Assistant integration and community resources

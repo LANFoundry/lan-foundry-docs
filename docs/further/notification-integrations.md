@@ -2,7 +2,7 @@
 
 frigate-notify supports multiple notification providers and can send to more than one simultaneously. Argus systems come configured for ntfy out of the box, but if you already use Telegram, Discord, Slack, or email for other alerts, you can add those providers alongside ntfy or replace it entirely.
 
-All provider config goes in the `alerts` block of `~/nvr/frigate-notify/app.yml`. Restart the frigate-notify container after any change.
+All provider config goes in the `alerts` block of `/opt/lanfoundry/config/frigate-notify/config.yml`. Restart the frigate-notify container after any change.
 
 ```bash
 docker restart frigate-notify
@@ -33,7 +33,7 @@ All enabled providers receive every alert. To send to both ntfy and Telegram, en
 alerts:
   ntfy:
     enabled: true
-    server: http://ntfy
+    server: http://ntfy.nvr-network:80
     topic: argus-d61b61
 
   telegram:
@@ -54,7 +54,7 @@ Already configured on Argus systems. Covered in detail in [Setting up push notif
 alerts:
   ntfy:
     enabled: true
-    server: http://ntfy
+    server: http://ntfy.nvr-network:80
     topic: argus-d61b61
     ignoressl: false
 ```

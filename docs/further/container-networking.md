@@ -6,7 +6,7 @@ If you've added a service from [Hardware potential](hardware-potential.md), or y
 
 ## The problem with the default
 
-Docker's `ports:` line publishes a container to every device that can reach the NVR host, not just the other containers running on it. For a DNS server like AdGuard Home, that's the point. Every device on your LAN needs to reach port 53. But plenty of containers only ever need to talk to one other container on the same host. A backend API that only your own frontend calls doesn't need to answer to anything on your LAN, let alone the wider internet.
+Docker's `ports:` line publishes a container to every device that can reach the NVR host. That's your whole LAN, and for a DNS server like AdGuard Home, that's the point. Every device on your LAN needs to reach port 53. But plenty of containers only ever need to talk to one other container on the same host. A backend API that only your own frontend calls doesn't need to answer to anything on your LAN, let alone the wider internet.
 
 Publishing a port you don't need is a small, easy-to-miss way to widen your attack surface. It's also easy to fix.
 
@@ -102,11 +102,11 @@ Neither service publishes a port. Neither joins `nvr-network`. They can reach ea
 
 ---
 
-## A note on trust, not just exposure
+## A note on trust
 
-Keeping a container off your LAN isn't the same as trusting it. Any container joined to `nvr-network` can still attempt to reach Frigate, Caddy, or anything else on that network, whether or not those services expect that traffic. Only join `nvr-network` if a container actually needs to talk to what's already on it. For everything else, a separate dedicated network like the example above keeps it isolated from Frigate and your recordings entirely, not just from the outside world.
+Keeping a container off your LAN isn't the same as trusting it. Any container joined to `nvr-network` can still attempt to reach Frigate, Caddy, or anything else on that network, whether or not those services expect that traffic. Only join `nvr-network` if a container actually needs to talk to what's already on it. For everything else, a separate dedicated network like the example above keeps it fully isolated from Frigate, your recordings, and the outside world.
 
-This is a second layer, not a replacement for the camera VLAN segmentation covered in [Blocking cloud telemetry](../privacy/blocking-telemetry.md). VLANs isolate devices on your physical network from each other. Docker's internal networking isolates containers on the same host from each other. Both matter, and neither substitutes for the other.
+This is a second layer, not a replacement for the camera VLAN segmentation covered in [Understanding network segmentation and VLANs](../privacy/blocking-telemetry.md). VLANs isolate devices on your physical network from each other; Docker's internal networking isolates containers on the same host from each other.
 
 ---
 
@@ -114,4 +114,4 @@ This is a second layer, not a replacement for the camera VLAN segmentation cover
 
 - [Hardware potential](hardware-potential.md), for what else the NVR hardware has room to run
 - [Caddy reverse proxy](../network/caddy-reverse-proxy.md), for how hostname routing works in more depth
-- [Blocking cloud telemetry](../privacy/blocking-telemetry.md), for the VLAN-level segmentation this pattern complements
+- [Understanding network segmentation and VLANs](../privacy/blocking-telemetry.md), for the VLAN-level segmentation this pattern complements

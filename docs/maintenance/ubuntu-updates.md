@@ -2,6 +2,9 @@
 
 Your NVR applications run in Docker, but the host underneath is **Ubuntu Server**. Security patches, kernel updates, and driver fixes arrive through the system package manager. Keeping the host current is part of a healthy maintenance routine.
 
+!!! note "On Enclave"
+    This guide pulls updates from the internet, which [Enclave](../network/enclave-tier.md) never connects to. Enclave ships with current software, and updating it after delivery is up to you: it means bringing Ubuntu packages onto the system from another machine, which these guides don't cover. LAN Foundry doesn't provide post-delivery updates for any tier.
+
 Container updates and OS updates are separate jobs. Complete [Backing up your Frigate configuration](backup.md) before maintenance that may require a reboot, and plan container checks after the system comes back up.
 
 ---

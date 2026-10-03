@@ -97,9 +97,12 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     el.addEventListener("click", () => {
       const amount = Math.max(list.clientWidth * 0.75, 120);
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
       list.scrollBy({
         left: direction === "left" ? -amount : amount,
-        behavior: "smooth",
+        behavior: prefersReducedMotion ? "auto" : "smooth",
       });
     });
     el.addEventListener("keydown", (event) => {

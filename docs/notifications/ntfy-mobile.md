@@ -2,14 +2,14 @@
 
 This guide walks through installing the ntfy app and subscribing to your Argus notification topic on iOS or Android. By the end, your phone will receive a push alert whenever Frigate detects an event.
 
-If you haven't set up the ntfy server on your NVR yet, start with [Setting up ntfy for push notifications](ntfy-setup.md).
+If you haven't set up the ntfy server on your NVR yet, start with [Setting up push notifications](ntfy-setup.md).
 
 ---
 
 ## Before you start
 
 - ntfy is running on your NVR and frigate-notify is configured to send notifications to it. See [Setting up push notifications](ntfy-setup.md).
-- You know your notification topic name. On Argus systems it's on your welcome card, or run `grep topic ~/nvr/frigate-notify/app.yml` on the NVR. See [Step 1 in the setup guide](ntfy-setup.md#step-1-find-your-notification-topic).
+- You know your notification topic name. Run `sudo grep topic /opt/lanfoundry/config/frigate-notify/config.yml` on the NVR to see it. See [Step 1 in the setup guide](ntfy-setup.md#step-1-set-your-notification-topic).
 - Your phone is on the same local network as the NVR, or you've configured remote delivery. If you want alerts when away from home, see [Step 4 in the ntfy setup guide](ntfy-setup.md#step-4-enable-remote-notifications) for options.
 
 **Example values used in this guide**
@@ -17,7 +17,7 @@ If you haven't set up the ntfy server on your NVR yet, start with [Setting up nt
 | Item | Example |
 |---|---|
 | ntfy server address | `https://ntfy.internal` |
-| ntfy server address (IP fallback) | `http://192.168.1.10:2586` |
+| ntfy server address (IP fallback) | `http://192.168.1.100:2586` |
 | Topic name | `argus-a7f3k` |
 
 Replace the topic name and IP address with the values from your own setup.
@@ -67,10 +67,10 @@ The ntfy app connects to ntfy.sh by default. You need to point it at your own NV
 ## Step 3 — Subscribe to your topic
 
 1. In the ntfy app, tap **+** (or **Subscribe to topic**).
-2. Enter your notification topic name — for example, `argus-a7f3k`. This is in your Argus welcome card and in `~/nvr/frigate-notify/app.yml` on the NVR.
+2. Enter your notification topic name — for example, `argus-a7f3k`. This is the `topic` value in `/opt/lanfoundry/config/frigate-notify/config.yml` on the NVR.
 3. Tap **Subscribe**.
 
-Walk in front of a camera to trigger a detection. A notification should arrive on your phone within a few seconds.
+Walk in front of a camera to trigger a detection. A notification should arrive on your phone within about 30 seconds, since frigate-notify checks Frigate for new events on that interval.
 
 ---
 

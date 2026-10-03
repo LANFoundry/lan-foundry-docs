@@ -4,6 +4,9 @@ By default, your Argus NVR is only reachable from inside your home network. Tail
 
 It works by creating an encrypted peer-to-peer connection directly between your devices. Once your NVR and your phone are both on the same Tailscale network, you can reach the Frigate interface, Cockpit, ntfy, and anything else running on the NVR as if you were home.
 
+!!! note "Not applicable to Enclave"
+    This guide assumes your network reaches the internet. [Enclave](enclave-tier.md) pairs with an air-gapped network with no WAN connectivity by design; kiosk mode on an attached monitor is the interface for that tier.
+
 ---
 
 ## Before you start
@@ -19,10 +22,29 @@ This guide assumes:
 
 ## Step 1 — Install Tailscale on the NVR
 
-!!! note "Argus systems"
-    Tailscale is pre-installed and pre-configured on all Argus systems before shipping. Skip ahead to Step 2 to connect your phone or laptop.
+### On Argus systems
 
-If you're running your own hardware, install Tailscale first:
+Vigil, Sentinel, and Warden ship with Tailscale installed as a container, but it's idle until you activate it: it has no auth key, so it never joins a network on its own. (See [Tailscale in the Argus stack](../about-the-stack.md#tailscale-remote-access-optional) for how it's set up.)
+
+Activate it from an SSH session on the NVR:
+
+```bash
+docker exec tailscale tailscale up
+```
+
+Tailscale will print a URL. Open it in a browser, sign in to your Tailscale account, and authorize the device. The NVR joins your tailnet as `argus-nvr`.
+
+Then get the NVR's Tailscale IP:
+
+```bash
+docker exec tailscale tailscale ip
+```
+
+This prints an address in the `100.x.x.x` range. Note it down, then skip to Step 2.
+
+### On your own hardware
+
+Install Tailscale first:
 
 ```bash
 curl -fsSL https://tailscale.com/install.sh | sh
@@ -36,7 +58,7 @@ sudo tailscale up
 
 Tailscale will print a URL. Open it in a browser, sign in to your Tailscale account, and authorize the device. The terminal will confirm when authentication is complete.
 
-Verify Tailscale is running and the NVR has an IP:
+Get the NVR's Tailscale IP:
 
 ```bash
 tailscale ip
@@ -80,7 +102,20 @@ To find the NVR's Tailscale IP at any time without SSH, open the Tailscale admin
 
 By default, Tailscale only gives you direct access to the NVR itself. To reach other devices on your home network while away (including your router, which is needed for hostname access in the next section), enable **subnet routing** on the NVR.
 
-This tells Tailscale to route traffic for your home subnet through the NVR:
+First, allow the NVR to forward traffic. Tailscale requires this on any Linux machine acting as a subnet router:
+
+```bash
+echo 'net.ipv4.ip_forward = 1' | sudo tee /etc/sysctl.d/99-tailscale.conf
+sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+```
+
+Then tell Tailscale to route traffic for your home subnet through the NVR. On Argus systems:
+
+```bash
+docker exec tailscale tailscale up --advertise-routes=192.168.1.0/24
+```
+
+On your own hardware:
 
 ```bash
 sudo tailscale up --advertise-routes=192.168.1.0/24
@@ -91,7 +126,7 @@ Replace `192.168.1.0/24` with your actual LAN subnet.
 Then approve the route in the Tailscale admin console:
 
 1. Go to [login.tailscale.com/admin/machines](https://login.tailscale.com/admin/machines)
-2. Click the NVR's entry (named `argus` on Argus systems)
+2. Click the NVR's entry (named `argus-nvr` on Argus systems)
 3. Open the **Route settings** menu
 4. Enable the advertised subnet
 
@@ -132,7 +167,7 @@ The server shown should be your router's IP, and it should return the NVR's loca
 
 When everything is working:
 
-- `tailscale status` on the NVR shows `tailscaled: running` and lists your connected devices
+- `tailscale status` on the NVR (`docker exec tailscale tailscale status` on Argus) lists the NVR and your other devices, without a `Logged out` message
 - You can open Frigate at `http://100.x.x.x:5000` from a phone that is not on your home Wi-Fi
 - The Tailscale admin console shows both the NVR and your phone as connected
 - If subnet routing is enabled, the route shows as approved in the NVR's machine settings

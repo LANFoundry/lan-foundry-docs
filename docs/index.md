@@ -32,17 +32,18 @@ This library is designed to stand on its own as well as support our product line
 | **At Argus launch** | Product **Getting started** guides: unboxing, first boot, Cockpit and Portainer orientation, Tailscale on the Argus workflow. Until then, Argus owners can follow the general guides; they match how we configure systems before they leave the shop. |
 | **After launch** | Updates as the stack changes, troubleshooting expanded from real support patterns, and new sections when we ship additional locally hosted products beyond our Argus line of NVRs. |
 
-Guides still being written show a **Coming soon** notice. Search and each section **Overview** reflect what is published today.
+Search and each section **Overview** reflect what is published today.
 
 ---
 
 ## What is in the library
 
-Use the tabs above to browse by topic. Each section opens with a short **Overview** that lists every guide and what it is for.
+Use the tabs above to browse by topic; Privacy & Security and Going Further are under the **More** tab. Each section opens with a short **Overview** that lists every guide and what it is for.
 
 | Section | What it covers |
 |---|---|
 | [The software stack](about-the-stack.md) | What runs on Argus, why each piece was chosen, and alternatives |
+| [Argus tiers at a glance](argus-tiers.md) | Vigil, Sentinel, Warden, and Enclave side by side: cameras, storage, and network access |
 | [Privacy & Security](privacy/index.md) | Why local recording matters, ONVIF basics, VLAN concepts |
 | [Network Setup](network/index.md) | Camera VLANs, DNS, Caddy hostnames, static IPs, Tailscale |
 | [Camera Setup](cameras/index.md) | Adding cameras to Frigate, zones, detection tuning |
@@ -56,35 +57,23 @@ Use the tabs above to browse by topic. Each section opens with a short **Overvie
 
 ## Where to start
 
-Pick the path that matches where you are:
+Pick the group that matches where you are, then the line that fits.
 
-**New to local NVR and want the "why" first**
+### Still deciding
 
-Start with [Why a local security camera system?](privacy/why-local-nvr.md), then [Understanding network segmentation and VLANs](privacy/blocking-telemetry.md).
+- **Want the "why" first:** start with [Why a local security camera system?](privacy/why-local-nvr.md), then [Understanding network segmentation and VLANs](privacy/blocking-telemetry.md).
+- **Starting with an existing home router:** you don't need to replace your router to get started. Read [How much does your router matter?](privacy/privacy-levels.md) to understand what you gain right away and what full camera isolation requires.
 
-**Starting with an existing home router**
+### Setting it up
 
-You don't need to replace your router to get started. Read [How much does your router matter?](privacy/privacy-levels.md) to understand what you gain right away and what full camera isolation requires.
+- **Network for cameras:** open the [Network Setup overview](network/index.md) and pick the guide for the part you're working on. If you're adding a camera VLAN, give the NVR a static IP first; the VLAN firewall rules use it.
+- **Adding cameras to Frigate:** [Adding your first camera to Frigate](cameras/first-camera.md) walks through RTSP URLs and `config.yml` on your network.
+- **Running an Argus NVR from LAN Foundry:** follow the network and camera guides above; they reflect how Argus is configured. Product-specific getting started guides will appear at launch. Hardware details: [Argus product line](https://lanfoundry.com/products).
 
-**Setting up a network for cameras**
+### Already running
 
-Open the [Network Setup overview](network/index.md). Typical order: camera VLAN on the router, VLAN on the switch, static IP for the NVR, DNS entries, then Caddy for hostnames like `frigate.internal`.
-
-**Adding cameras to Frigate**
-
-[Adding your first camera to Frigate](cameras/first-camera.md) walks through RTSP URLs and `config.yml` on your network.
-
-**Running an Argus NVR from LAN Foundry**
-
-Follow the network and camera guides above; they reflect how Argus is configured. Product-specific getting started guides will appear at launch. Hardware details: [Argus product line](https://lanfoundry.com/products).
-
-**Something broke**
-
-Open the [Troubleshooting overview](troubleshooting/index.md) and choose the guide that matches your symptom.
-
-**Building beyond cameras**
-
-See [Going Further](further/index.md) for Home Assistant integration and community resources.
+- **Something broke:** open the [Troubleshooting overview](troubleshooting/index.md) and choose the guide that matches your symptom.
+- **Building beyond cameras:** see [Going Further](further/index.md) for Home Assistant integration and community resources.
 
 ---
 
@@ -94,7 +83,7 @@ See [Going Further](further/index.md) for Home Assistant integration and communi
 |---|---|---|
 | **These guides** | Fully applicable; you handle initial camera and OS setup | Applicable for day-two config, network changes, and troubleshooting |
 | **Support** | Community forums and project docs (linked from troubleshooting guides) | [lanfoundry.com/support](https://lanfoundry.com/support) when guides are not enough |
-| **Defaults** | You choose cameras, drives, and network gear | Cameras, ZFS pool, and stack are pre-configured; welcome materials cover passwords and stream URLs |
+| **Defaults** | You choose cameras, drives, and network gear | Cameras and ZFS pool are set up, and the software stack is installed and running, ready for you to finish configuring; welcome materials cover passwords and stream URLs |
 
 Same documentation, different starting point.
 

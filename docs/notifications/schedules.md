@@ -2,7 +2,7 @@
 
 This guide covers how to stop notifications during hours you don't want them — overnight, during work, or whenever alerts are more nuisance than useful.
 
-ntfy's self-hosted server doesn't have a built-in quiet hours setting. The practical options are phone-side (simplest, no NVR changes) or Frigate-side (stops events from being generated at all). This guide covers both, starting with the easier one.
+ntfy itself doesn't have a quiet hours setting, but frigate-notify, the container that sends Frigate's events to ntfy, does. That gives you three practical options: phone-side (simplest, no NVR changes), frigate-notify (one schedule for every phone, detection keeps running), or Frigate-side (stops events from being generated at all). This guide covers all three, starting with the easiest, plus Home Assistant if you already run it.
 
 ---
 
@@ -43,77 +43,134 @@ This option is the right choice if you only want quiet hours and don't need Frig
 
 ---
 
-## Option 2 — Disable Frigate detection on a schedule
+## Option 2 — Quiet hours in frigate-notify
 
-If you'd rather Frigate stop generating events entirely during certain hours — not just silence them on your phone — you can toggle detection mode via MQTT commands on a schedule.
+Option 1 has to be set up on every phone that's subscribed. If several people get your alerts, or you'd rather set the schedule once on the NVR, frigate-notify can hold back notifications during a time window instead. Frigate keeps detecting and recording as normal; the events are still in Frigate's review timeline, they just don't send a notification.
 
-This approach requires an MQTT broker running alongside Frigate. If you don't have one, this is more involved to set up. The phone-based approach in Option 1 achieves the same result for notifications with much less configuration.
+Open `/opt/lanfoundry/config/frigate-notify/config.yml` on the NVR host (`sudo nano /opt/lanfoundry/config/frigate-notify/config.yml`) and add a `quiet` section *inside* the existing `alerts:` section (don't add a second `alerts:` line):
 
-**What this does:** Frigate listens for MQTT messages on its control topics. Sending the right message pauses motion detection on a camera, which prevents events from being created, which means no notifications are generated.
+```yaml
+alerts:
+  quiet:
+    start: "23:00"
+    end: "07:00"
+  ntfy:
+    enabled: true
+    server: http://ntfy.nvr-network:80
+    topic: argus-XXXXXX
+    ignoressl: false
+```
+
+Times are 24-hour. A window that crosses midnight, like `23:00` to `07:00`, works as you'd expect. Keep your own `topic` value rather than copying `argus-XXXXXX`.
+
+Restart frigate-notify for the change to take effect:
+
+```bash
+docker restart frigate-notify
+```
+
+!!! note "Quiet hours follow the container's clock"
+    frigate-notify compares these times against its own clock, which is UTC unless the container's time zone is set. If quiet hours start and end at the wrong time of day, add `TZ` (for example `TZ=America/Chicago`) to the frigate-notify service's `environment` in your compose stack and redeploy. Check what the container thinks the time is with `docker exec frigate-notify date`.
+
+---
+
+## Option 3 — Disable Frigate detection on a schedule
+
+Options 1 and 2 stop notifications, but Frigate keeps detecting and recording events in the background. If you'd rather Frigate stop generating events entirely during certain hours, you can toggle object detection via MQTT commands on a schedule.
+
+This approach requires an MQTT broker running alongside Frigate. If you don't have one, this is more involved to set up. If you only care about notifications, Option 2 gets you there with much less configuration.
+
+**What this does:** Frigate listens for MQTT messages on its control topics. Sending the right message turns off object detection on a camera, which prevents events from being created, which means frigate-notify has nothing to send.
 
 **Adding Mosquitto (MQTT broker) to your stack**
 
-If you don't have an MQTT broker running, add Mosquitto to your Portainer stack:
+If you don't have an MQTT broker running, add Mosquitto. Mosquitto 2.x won't accept connections from other containers until a config file tells it to listen, so create one first:
+
+```bash
+sudo mkdir -p /opt/lanfoundry/config/mosquitto
+sudo nano /opt/lanfoundry/config/mosquitto/mosquitto.conf
+```
+
+Paste:
+
+```
+listener 1883
+allow_anonymous true
+persistence true
+persistence_location /mosquitto/data/
+```
+
+`allow_anonymous true` is only reasonable because of how the service below publishes its port: bound to `127.0.0.1`, so nothing else on your LAN can reach the broker. Frigate reaches it over the shared Docker network, and the cron job below runs on the NVR itself. Without that, anyone on your network could turn detection off.
+
+Then add the service to your Portainer stack:
 
 ```yaml
   mosquitto:
-    image: eclipse-mosquitto
+    image: eclipse-mosquitto:2
     container_name: mosquitto
     restart: unless-stopped
+    networks:
+      - nvr-network
     ports:
-      - "1883:1883"
+      - "127.0.0.1:1883:1883"
     volumes:
-      - mosquitto-config:/mosquitto/config
+      - /opt/lanfoundry/config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto-data:/mosquitto/data
-      - mosquitto-log:/mosquitto/log
 ```
 
-Add the corresponding volumes entry and deploy.
+Add `mosquitto-data` to the stack's top-level `volumes:` section and deploy.
 
-Then update Frigate's `config.yml` to connect to it:
+Then point Frigate at the broker. Add this to Frigate's `config.yml` (`/opt/lanfoundry/config/frigate/config.yml` on Argus) and restart Frigate:
 
 ```yaml
 mqtt:
+  enabled: true
   host: mosquitto
   port: 1883
 ```
 
 **Sending a control command**
 
-To pause motion detection on a camera:
+The commands below use `mosquitto_pub`, which isn't installed on the NVR host by default:
 
 ```bash
-mosquitto_pub -h YOUR_NVR_IP -t "frigate/front_door/motion/set" -m "OFF"
+sudo apt install mosquitto-clients
 ```
 
-To re-enable it:
+To turn off object detection on a camera:
 
 ```bash
-mosquitto_pub -h YOUR_NVR_IP -t "frigate/front_door/motion/set" -m "ON"
+mosquitto_pub -h 127.0.0.1 -t "frigate/front_door/detect/set" -m "OFF"
 ```
 
-Replace `front_door` with your camera name.
+To turn it back on:
+
+```bash
+mosquitto_pub -h 127.0.0.1 -t "frigate/front_door/detect/set" -m "ON"
+```
+
+Replace `front_door` with your camera name. Use `detect/set`, not `motion/set`: Frigate refuses to turn off motion detection while object detection is still on, so a `motion/set OFF` command on its own does nothing. The detection setting also survives a Frigate restart, so if Frigate restarts overnight, detection stays off until the morning command runs.
 
 **Scheduling the commands**
 
-A cron job on the NVR (or any always-on device) can run these commands on a schedule. For example, to silence all cameras from 11pm to 7am:
+A cron job on the NVR can run these commands on a schedule. (It has to be the NVR itself, since the broker only listens on `127.0.0.1`.) For example, to silence all cameras from 11pm to 7am:
 
 ```bash
 # Disable detection at 11pm
-0 23 * * * mosquitto_pub -h 127.0.0.1 -t "frigate/front_door/motion/set" -m "OFF"
+0 23 * * * mosquitto_pub -h 127.0.0.1 -t "frigate/front_door/detect/set" -m "OFF"
 
 # Re-enable at 7am
-0 7  * * * mosquitto_pub -h 127.0.0.1 -t "frigate/front_door/motion/set" -m "ON"
+0 7  * * * mosquitto_pub -h 127.0.0.1 -t "frigate/front_door/detect/set" -m "ON"
 ```
 
 Add a line for each camera. Edit crontab with `crontab -e` on the NVR.
 
 !!! note "Recording continues during detection pause"
-    Pausing motion detection stops Frigate from generating events and sending notifications. Continuous recording (if configured) continues unaffected. Cameras remain online and viewable in the Frigate UI.
+    Turning off object detection stops Frigate from generating events, so no notifications are sent. Continuous recording (if configured) continues unaffected. Cameras remain online and viewable in the Frigate UI.
 
 ---
 
-## Option 3 — Home Assistant automations
+## Option 4 — Home Assistant automations
 
 If you add Home Assistant to your stack, time-based notification control becomes significantly easier. HA can toggle Frigate detection modes on a schedule through a visual automation editor, without writing MQTT commands or managing cron jobs manually.
 

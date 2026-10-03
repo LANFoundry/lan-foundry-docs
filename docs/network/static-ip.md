@@ -90,7 +90,7 @@ A few things to note:
 - Replace `ens18` with your actual interface name from Step 1
 - Replace `192.168.1.100/24` with the static IP you want to assign. The `/24` is the subnet prefix — use `/24` for a standard home or small office network
 - Replace `192.168.1.1` with your router's gateway IP
-- The DNS servers shown are Cloudflare (`1.1.1.1`) and Google (`8.8.8.8`). You can use your router's IP here instead if you prefer local DNS resolution
+- The DNS servers shown are Cloudflare (`1.1.1.1`) and Google (`8.8.8.8`). You can use your router's IP here instead if you prefer local DNS resolution. On [Enclave](enclave-tier.md), use your router's IP: public DNS servers are unreachable on a network with no internet connection
 
 **YAML indentation is critical.** Use exactly two spaces for each level of indentation. Do not use tabs. A single indentation error will prevent the configuration from applying.
 
@@ -144,13 +144,13 @@ Test connectivity:
 ping -c 3 1.1.1.1
 ```
 
-If that succeeds, your static IP is configured correctly and the NVR can reach the internet. If ping is not found on your installation, install it first with `sudo apt install iputils-ping`.
+If that succeeds, your static IP is configured correctly and the NVR can reach the internet. On Enclave this ping is expected to fail; ping your router's IP (for example `ping -c 3 192.168.1.1`) instead to confirm the network is up. If ping is not found on your installation, install it first with `sudo apt install iputils-ping`.
 
 ---
 
 ## A note on other Linux distributions using Netplan
 
-The steps above apply to any Linux distribution that uses Netplan as its network manager, not just Ubuntu Server. The file location (`/etc/netplan/`), syntax, and commands are identical. The only thing that varies is the filename of the configuration file, which may differ from `00-installer-config.yaml` depending on how the system was installed.
+The steps above apply to any Linux distribution that uses Netplan as its network manager. The file location (`/etc/netplan/`), syntax, and commands are identical. The only thing that varies is the filename of the configuration file, which may differ from `00-installer-config.yaml` depending on how the system was installed.
 
 If your distribution uses a different network manager such as NetworkManager or systemd-networkd directly, the configuration approach will differ. Check your distribution's documentation for the appropriate method.
 
@@ -158,4 +158,8 @@ If your distribution uses a different network manager such as NetworkManager or 
 
 ## Where to go from here
 
-With a static IP assigned, your NVR has a stable address that your firewall rules, Caddy configuration, and camera streams can all rely on. The next step is [configuring Caddy as a reverse proxy](caddy-reverse-proxy.md) so you can reach Frigate, Cockpit, and Portainer by hostname from anywhere on your network.
+With a static IP assigned, your NVR has a stable address that other parts of the setup can rely on. These guides use it:
+
+- [Camera VLAN in OPNsense](vlan-opnsense.md), whose firewall rules let cameras reach the NVR at this address
+- [DNS entries in OPNsense](dns-opnsense.md), which point hostnames like `frigate.internal` at this address
+- [Caddy reverse proxy](caddy-reverse-proxy.md), to reach Frigate, Cockpit, and Portainer by hostname

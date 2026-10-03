@@ -74,7 +74,7 @@ NAME    SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  AL
 data   5.45T  2.10T  3.35T        -         -     2%    38%  1.00x    ONLINE  -
 ```
 
-Keep an eye on **CAP** (capacity used). Plan to act before it reaches **95%**. See [Retention policies](retention.md) or [Drive and pool errors](../troubleshooting/drive-errors.md#free-up-space) if you're getting close.
+Keep an eye on **CAP** (capacity used). Below **90%** is healthy. At 90%, plan to shorten retention; at **95%**, treat it as urgent. See [Retention policies](retention.md) or [Drive and pool errors](../troubleshooting/drive-errors.md#free-up-space) if you're getting close.
 
 **If the state is anything other than ONLINE**, or if any READ, WRITE, or CKSUM column is non-zero, see [Drive and pool errors](../troubleshooting/drive-errors.md) for next steps. CKSUM errors on a specific drive are a particularly reliable indicator of a failing pool member.
 
@@ -138,7 +138,7 @@ sudo smartctl --all /dev/sda
 
 The key attributes to watch are described in detail in [Drive and pool errors](../troubleshooting/drive-errors.md#read-the-smart-warning). The short version: reallocated sectors, pending sectors, uncorrectable errors, and UDMA/CRC errors are the ones that signal a problem. A few reallocated sectors on an older drive is worth monitoring. A rising count, pending sectors, or any uncorrectable errors means plan a replacement.
 
-Run these checks on every drive in the pool, not just one. Drives from the same batch sometimes fail close together.
+Run these checks on every drive in the pool. Drives from the same batch sometimes fail close together.
 
 ---
 

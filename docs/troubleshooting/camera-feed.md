@@ -97,7 +97,7 @@ If Frigate can't reach the camera at the network level, no stream URL will work 
 
 ### Confirm the camera has an IP address
 
-Look in OPNsense under **Services**, then **DHCPv4**, then **Leases** for a recently connected device on your camera VLAN. Select your camera VLAN interface from the tabs and match the lease to the camera's MAC address if you know it.
+In OPNsense, open **Services**, then **Dnsmasq DNS & DHCP**, then **Leases**. Look for a recently connected device with an IP in your camera VLAN's range, and match the lease to the camera's MAC address if you know it.
 
 If you need to verify settings inside the camera itself, see [Accessing cameras from your computer](#accessing-cameras-from-your-computer) for how to reach the camera web interface from another device on your network.
 
@@ -162,7 +162,7 @@ Work through these in order.
 
 When a camera moves from the main LAN to the camera VLAN, it gets a new IP address from the VLAN's DHCP range. Frigate will keep trying the old IP until you update `config.yml`.
 
-In OPNsense, open **Services**, then **DHCPv4**, then **Leases**. Select your camera VLAN interface and find the camera's current IP. If it's different from what's in your Frigate config, update `config.yml` with the new address and restart Frigate:
+In OPNsense, open **Services**, then **Dnsmasq DNS & DHCP**, then **Leases**. Find the camera's lease in your camera VLAN's range and note its current IP. If it's different from what's in your Frigate config, update `config.yml` with the new address and restart Frigate:
 
 ```bash
 docker restart frigate
@@ -188,9 +188,9 @@ To confirm a block is happening, check **Firewall**, then **Log Files**, then **
 
 ## Accessing cameras from your computer
 
-Argus systems run Ubuntu Server without a desktop browser. You won't open a camera's web interface on the NVR itself. Most troubleshooting happens over SSH using commands like `ping`, `nc`, `ffprobe`, and `docker logs`.
+Argus systems run Ubuntu Server without a desktop browser. You won't open a camera's web interface on the NVR itself. Most troubleshooting happens over SSH using commands like `ping`, `nc`, `ffprobe`, and `docker logs`. On [Enclave](../network/enclave-tier.md), whose kiosk shows only Frigate, run the same commands from the local terminal (`Ctrl+Alt+T`).
 
-If your network follows our recommended camera VLAN setup, your other devices can't reach cameras either. Rule 5 in the [OPNsense camera VLAN guide](../network/vlan-opnsense.md) blocks everything on the main LAN from accessing the camera VLAN except the NVR. That's intentional. It also means browsing to a camera's IP address from your laptop will time out unless you add a temporary exception.
+If your network follows our recommended camera VLAN setup, your other devices can't reach cameras either. Rules 5 and 6 in the [OPNsense camera VLAN guide](../network/vlan-opnsense.md) allow the NVR to reach the camera VLAN and block everything else on the main LAN from it. That's intentional. It also means browsing to a camera's IP address from your laptop will time out unless you add a temporary exception.
 
 ### What you can do from the NVR without any rule changes
 
@@ -205,7 +205,7 @@ For many problems, that's enough. You don't need the camera web interface at all
 
 ### What you can check without reaching the camera directly
 
-You can confirm a camera received an IP address from OPNsense under **Services**, then **DHCPv4**, then **Leases**, without connecting to the camera itself. Select your camera VLAN interface and look for a lease matching the camera's MAC address.
+You can confirm a camera received an IP address from OPNsense under **Services**, then **Dnsmasq DNS & DHCP**, then **Leases**, without connecting to the camera itself. Look for a lease in your camera VLAN's range matching the camera's MAC address.
 
 You can also use the camera manufacturer's mobile app during initial setup if the camera supports local configuration over Wi-Fi or before it joins the camera VLAN. Once a camera is on the isolated VLAN, the app on your phone typically won't reach it either unless you're on a network path that can access that VLAN.
 

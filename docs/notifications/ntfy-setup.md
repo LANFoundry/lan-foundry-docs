@@ -1,6 +1,6 @@
 # Setting up push notifications
 
-Push notifications on Argus systems use three containers working in sequence: **Frigate** detects events, **frigate-notify** picks them up and formats them, and **ntfy** delivers them to your phone. All three are pre-configured on Argus systems. This guide explains how the chain works, how to find your unique notification topic, and how to subscribe on your phone.
+Push notifications on Argus systems use three containers working in sequence: **Frigate** detects events, **frigate-notify** picks them up and formats them, and **ntfy** delivers them to your phone. All three are installed and wired together on Argus systems; what's left for you is choosing a notification topic and subscribing your phone. This guide explains how the chain works, how to set your topic, and how to subscribe.
 
 If you're running your own hardware, see [Running your own hardware?](#running-your-own-hardware) at the bottom of this guide.
 
@@ -20,11 +20,11 @@ ntfy caches snapshots locally in a volume on the NVR so your phone can download 
 
 ---
 
-## What's pre-configured on your Argus system
+## What's already set up on your Argus system
 
 ### frigate-notify
 
-frigate-notify's config is at `~/nvr/frigate-notify/app.yml` on the NVR host:
+frigate-notify's config is at `/opt/lanfoundry/config/frigate-notify/config.yml` on the NVR host, mounted read-only into the container. Edit it on the host, not inside the container:
 
 ```yaml
 app:
@@ -43,16 +43,16 @@ frigate:
 alerts:
   ntfy:
     enabled: true
-    server: http://ntfy
-    topic: argus-XXXXXX
+    server: http://ntfy.nvr-network:80
+    topic: your-topic-name
     ignoressl: false
 ```
 
-`interval: 30` means frigate-notify checks Frigate for new events every 30 seconds. Notifications may arrive up to 30 seconds after a detection, which is normal. `topic` is set to a unique value per system at the time of configuration — your actual topic is printed on your Argus welcome card and stored in the config file.
+`interval: 30` means frigate-notify checks Frigate for new events every 30 seconds. Notifications may arrive up to 30 seconds after a detection, which is normal. `server` reaches ntfy by its container name on the shared Docker network. `topic` is the name your phone subscribes to; it ships as the placeholder `your-topic-name`, and [Step 1](#step-1-set-your-notification-topic) replaces it with your own.
 
 ### ntfy
 
-ntfy's config is stored in the `ntfy-config` Docker volume, mounted at `/etc/ntfy/server.yml` inside the container:
+ntfy's config is at `/opt/lanfoundry/config/ntfy/server.yml` on the NVR host, mounted read-only into the container at `/etc/ntfy`:
 
 ```yaml
 base-url: https://ntfy.internal
@@ -65,21 +65,29 @@ attachment-file-size-limit: 15M
 
 ---
 
-## Step 1 — Find your notification topic
+## Step 1 — Set your notification topic
 
-Your topic name is on your Argus welcome card. If you need to look it up on the NVR directly:
+Check what the topic is set to now:
 
 ```bash
-grep topic ~/nvr/frigate-notify/app.yml
+sudo grep topic /opt/lanfoundry/config/frigate-notify/config.yml
 ```
 
-The output will look like:
+If it still shows `your-topic-name`, pick a topic of your own. Make it hard to guess: anyone who can reach your ntfy server and knows the topic name can subscribe to your alerts. Something like `argus-d61b61` works well.
 
-```
-    topic: argus-d61b61
+Open the file and replace the placeholder:
+
+```bash
+sudo nano /opt/lanfoundry/config/frigate-notify/config.yml
 ```
 
-Keep note of this value — you'll enter it in the ntfy app in the next guide.
+Then restart frigate-notify so it picks up the change:
+
+```bash
+docker restart frigate-notify
+```
+
+Keep note of the topic — you'll enter it in the ntfy app in the next guide.
 
 ---
 
@@ -107,7 +115,13 @@ By default, ntfy only delivers to devices on the same local network as the NVR. 
 
 ntfy can forward a copy of each notification to ntfy.sh, which delivers it to your phone via FCM (Android) or APNs (iOS) from anywhere. Your NVR needs outbound internet access for this to work.
 
-Add one line to the ntfy `server.yml` via Portainer (Volumes → `ntfy-config` → Browse → `server.yml`):
+Add one line to ntfy's `server.yml` on the NVR host. The file is mounted read-only into the container, so edit it on the host:
+
+```bash
+sudo nano /opt/lanfoundry/config/ntfy/server.yml
+```
+
+Add `upstream-base-url` below the existing settings:
 
 ```yaml
 base-url: https://ntfy.internal
@@ -122,13 +136,13 @@ Restart the ntfy container after saving. The ntfy app on your phone will receive
 **Privacy note:** When upstream is enabled, the notification text — camera name, event type — and the snapshot attachment pass through ntfy.sh's servers on the way to your phone. No camera footage or RTSP stream is ever involved. If you want to keep notification content entirely off third-party infrastructure, use Tailscale instead.
 
 !!! note "iOS users"
-    Apple requires all push notifications to route through Apple's servers (APNs), regardless of whether you use ntfy.sh or another relay. When the ntfy iOS app connects to a self-hosted server, it uses ntfy.sh's relay to reach APNs. Notification text and snapshots transit ntfy.sh's servers on the way to your iPhone. This is an Apple platform constraint — it applies to every self-hosted push notification solution on iOS, not just ntfy.
+    Apple requires all push notifications to route through Apple's servers (APNs), regardless of whether you use ntfy.sh or another relay. When the ntfy iOS app connects to a self-hosted server, it uses ntfy.sh's relay to reach APNs. Notification text and snapshots transit ntfy.sh's servers on the way to your iPhone, an Apple platform constraint that applies to any self-hosted push service.
 
 ### Option B — Tailscale
 
-With Tailscale running on both the NVR and your phone, the ntfy app connects directly to the NVR's Tailscale address from anywhere in the world — no third-party relay involved, no notification content leaving your infrastructure.
+With Tailscale running on both the NVR and your phone, the ntfy app connects to the NVR over your tailnet from anywhere. On Android, that means no third-party relay is involved. On iOS, Apple's push requirement still applies (see the note above), so notification text and snapshots transit ntfy.sh on the way to an iPhone either way.
 
-See [Accessing the NVR remotely with Tailscale](../network/tailscale.md) for setup. Once Tailscale is running, point the ntfy app at the NVR's Tailscale IP or hostname instead of `https://ntfy.internal`. Alerts arrive as long as Tailscale is connected on your phone.
+See [Remote access with Tailscale](../network/tailscale.md) for setup. The simplest way to make this work is to set up [subnet routing and Split DNS](../network/tailscale.md#optional-access-services-by-hostname) there, so `https://ntfy.internal` resolves over Tailscale and the ntfy app can keep using that address. Pointing the app at the NVR's raw Tailscale IP instead can get you the notification text without the snapshot, because ntfy builds snapshot links from its `base-url` (`https://ntfy.internal`). Alerts arrive as long as Tailscale is connected on your phone.
 
 ---
 
@@ -143,11 +157,11 @@ In your existing compose file, add the frigate-notify service alongside Frigate,
 ```yaml
 services:
   frigate-notify:
-    image: 0x2142/frigate-notify:latest
+    image: ghcr.io/0x2142/frigate-notify:latest
     container_name: frigate-notify
     restart: unless-stopped
     volumes:
-      - ~/nvr/frigate-notify/app.yml:/etc/frigate-notify/config.yaml
+      - /opt/lanfoundry/config/frigate-notify/config.yml:/app/config.yml:ro
     networks:
       - nvr-network
 ```
@@ -157,13 +171,13 @@ frigate-notify needs to be on the same Docker network as Frigate and ntfy to rea
 Create the config directory and file on the host before starting the container:
 
 ```bash
-mkdir -p ~/nvr/frigate-notify
-nano ~/nvr/frigate-notify/app.yml
+sudo mkdir -p /opt/lanfoundry/config/frigate-notify
+sudo nano /opt/lanfoundry/config/frigate-notify/config.yml
 ```
 
 ### Configure frigate-notify
 
-Paste the following into `app.yml`, replacing the topic with something unique to your system:
+Paste the following into `config.yml`, replacing the topic with something unique to your system. The paths here match the Argus layout; use your own if you prefer, as long as the compose file and the folder agree.
 
 ```yaml
 app:
@@ -182,7 +196,7 @@ frigate:
 alerts:
   ntfy:
     enabled: true
-    server: http://ntfy
+    server: http://ntfy.nvr-network:80
     topic: your-unique-topic
     ignoressl: false
 ```
@@ -191,7 +205,7 @@ Pick a topic name that isn't easily guessable — anyone who knows it can subscr
 
 ### Configure ntfy
 
-ntfy needs `base-url` and the attachment cache configured or it will reject every notification from frigate-notify with a 400 error. Edit ntfy's `server.yml` (in the `ntfy-config` volume via Portainer, or directly at the path mounted into the container):
+ntfy needs `base-url` and the attachment cache configured or it will reject every notification from frigate-notify with a 400 error. Edit ntfy's `server.yml` on the host, at whatever path you mount to `/etc/ntfy` in the container (`/opt/lanfoundry/config/ntfy/server.yml` in the Argus layout):
 
 ```yaml
 base-url: https://ntfy.internal

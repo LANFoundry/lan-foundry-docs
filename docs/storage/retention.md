@@ -2,7 +2,7 @@
 
 Retention settings control how long Frigate keeps video segments, snapshots, and related media on your NVR before deleting them automatically.
 
-Each Argus tier is sized so that **30 days of continuous recording** at that tier's **maximum camera count** fits within healthy ZFS pool limits. Vigil, Sentinel, and Warden use different pool sizes and camera limits, but the retention target is the same: a full month of uninterrupted timeline on every camera when the system is loaded as designed.
+Each Argus tier is sized so that **30 days of continuous recording** at that tier's **maximum camera count** fits within healthy ZFS pool limits. [Vigil, Sentinel, and Warden](../argus-tiers.md) use different pool sizes and camera limits (Enclave matches Sentinel), but the retention target is the same: a full month of uninterrupted timeline on every camera when the system is loaded as designed.
 
 Argus systems ship with retention already configured in `config.yml` for that goal. You do not need to change anything on day one if you stay within your tier's camera count and stream targets. This guide explains how that works, when you might adjust it, and how to apply changes safely.
 

@@ -2,6 +2,9 @@
 
 Frigate, Caddy, and Portainer run as Docker containers. Image updates ship bug fixes, security patches, and new features from each project. This guide walks through pulling newer images and restarting containers safely using Portainer.
 
+!!! note "On Enclave"
+    This guide pulls updates from the internet, which [Enclave](../network/enclave-tier.md) never connects to. Enclave ships with current software, and updating it after delivery is up to you: it means bringing container images onto the system from another machine, which these guides don't cover. LAN Foundry doesn't provide post-delivery updates for any tier.
+
 Updates can change behavior or require configuration adjustments. **Back up first.** See [Backing up your Frigate configuration](backup.md) before pulling new images.
 
 ---

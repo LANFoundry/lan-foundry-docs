@@ -80,7 +80,7 @@ dozzle.internal {
 A few things worth understanding:
 
 - **`local_certs`** in the global block tells Caddy to act as its own certificate authority and issue certificates internally rather than using Let's Encrypt. This is correct for a local network with no public domain.
-- **`tls internal`** on each site tells Caddy to issue a locally trusted certificate for that hostname. Your browser won't automatically trust it until you accept it once or install Caddy's root certificate (see Step 1).
+- **`tls internal`** on each site tells Caddy to issue a locally trusted certificate for that hostname. Your browser won't automatically trust it until you accept it once or install Caddy's root certificate (see [Step 2](#step-2-trust-the-certificate)).
 - **`tls_insecure_skip_verify`** on the Portainer and Cockpit blocks tells Caddy to accept the self-signed certificate those services use on their backend. This is safe on a local network where you control both ends of the connection.
 
 ---
@@ -183,11 +183,11 @@ Cockpit runs on the host, not in Docker — it's reached through `host.docker.in
 ### Create the Caddyfile
 
 ```bash
-mkdir -p ~/nvr/caddy
-nano ~/nvr/caddy/Caddyfile
+sudo mkdir -p /opt/lanfoundry/config/caddy
+sudo nano /opt/lanfoundry/config/caddy/Caddyfile
 ```
 
-Paste the Caddyfile from the [What's pre-configured on your Argus system](#whats-pre-configured-on-your-argus-system) section above. Adjust any service names or ports to match your own stack.
+Paste the Caddyfile from the [What's pre-configured on your Argus system](#whats-pre-configured-on-your-argus-system) section above. Adjust any service names or ports to match your own stack. The path matches the Argus layout; any path works as long as the `-v` line below points at it.
 
 Save with `Ctrl+O`, then `Enter`, then exit with `Ctrl+X`.
 
@@ -200,11 +200,11 @@ docker run -d \
   --add-host host.docker.internal:host-gateway \
   -p 80:80 \
   -p 443:443 \
-  -v ~/nvr/caddy/Caddyfile:/etc/caddy/Caddyfile \
+  -v /opt/lanfoundry/config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro \
   -v caddy-data:/data \
   -v caddy-config:/config \
   --restart unless-stopped \
-  caddy:latest
+  caddy:2-alpine
 ```
 
 The `--add-host host.docker.internal:host-gateway` flag is what allows Caddy to reach Cockpit on the host. Without it, `host.docker.internal` won't resolve inside the container.
@@ -284,5 +284,5 @@ This works cleanly but requires editing the hosts file on every device, which is
 With Caddy running, all NVR services are accessible by hostname from your main LAN.
 
 - [Setting up a camera VLAN in OPNsense](vlan-opnsense.md) — isolate your cameras from the rest of your network
-- [Blocking camera cloud telemetry](../privacy/blocking-telemetry.md) — firewall rules to prevent cameras from phoning home
+- [Understanding network segmentation and VLANs](../privacy/blocking-telemetry.md) — what VLAN segmentation does and why cameras belong on an isolated segment
 - [Remote access with Tailscale](tailscale.md) — reach your NVR from outside your home network

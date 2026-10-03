@@ -4,7 +4,10 @@ You set up DNS, configured Caddy, and typed `https://frigate.internal` into your
 
 This guide walks through figuring out where the breakdown is. Reaching your NVR services by hostname involves two separate steps: your device has to resolve the hostname to an IP address, and Caddy on the NVR has to receive the request and route it to the right service. This guide helps you identify which of those is failing and what to do about it.
 
-The hostnames used throughout match the [Caddy reverse proxy guide](../network/caddy-reverse-proxy.md) and the [OPNsense DNS guide](../network/dns-opnsense.md): `frigate.internal`, `portainer.internal`, and `cockpit.internal`.
+The hostnames used throughout match the [Caddy reverse proxy guide](../network/caddy-reverse-proxy.md) and the [OPNsense DNS guide](../network/dns-opnsense.md): `frigate.internal`, `portainer.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal`.
+
+!!! note "Not applicable to Enclave"
+    This guide assumes you reach the NVR from another device on your network. [Enclave](../network/enclave-tier.md) has no network-based way to reach it by design; kiosk mode on an attached monitor is the interface for that tier.
 
 ---
 
@@ -55,7 +58,7 @@ If your browser reports that the hostname can't be found, or `nslookup` returns 
 
 ### Confirm OPNsense has the right entries
 
-In the OPNsense web interface, navigate to **Services**, then **Unbound DNS**, then **Overrides**, then **Host Overrides**. You should see three entries:
+In the OPNsense web interface, navigate to **Services**, then **Unbound DNS**, then **Overrides**, then **Host Overrides**. You should see five entries:
 
 | Host | Domain | IP |
 |---|---|---|
@@ -198,15 +201,18 @@ SSH into the NVR or connect a keyboard and monitor, then check that the containe
 docker ps
 ```
 
-You should see `caddy`, `frigate`, and `portainer` in the list with a status of **Up**. If Caddy isn't running, nothing will respond on port 443 regardless of DNS.
+You should see `caddy`, `frigate`, `portainer`, `ntfy`, and `dozzle` in the list with a status of **Up**. If Caddy isn't running, nothing will respond on port 443 regardless of DNS.
 
 ### Test a service directly by port
 
 Bypass Caddy temporarily to confirm the underlying service is reachable. From a device on your main LAN:
 
 - Frigate: `http://192.168.1.100:5000`
-- Portainer: `http://192.168.1.100:9000`
+- Portainer: `https://192.168.1.100:9443`
 - Cockpit: `https://192.168.1.100:9090`
+- ntfy: `http://192.168.1.100:2586`
+
+Dozzle has no direct port: it's only reachable through Caddy by design, so `dozzle.internal` is the only way in.
 
 If direct port access works but the hostname doesn't, the problem is DNS or Caddy, not the service itself. If direct port access also fails, the service isn't running or a firewall is blocking the connection.
 
@@ -247,7 +253,7 @@ Caddy can't reach Cockpit on the host. The container was likely started without 
 
 **No errors, but the wrong service loads**
 
-The hostname in your browser doesn't match the Caddyfile. Confirm the Caddyfile on the NVR contains `frigate.internal`, `portainer.internal`, and `cockpit.internal` exactly. Typos here mean Caddy won't route the request correctly.
+The hostname in your browser doesn't match the Caddyfile. Confirm the Caddyfile on the NVR (`/opt/lanfoundry/config/caddy/Caddyfile` on Argus) contains `frigate.internal`, `portainer.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal` exactly. Typos here mean Caddy won't route the request correctly.
 
 ### Confirm containers share a network
 
@@ -257,7 +263,7 @@ On the NVR:
 docker network inspect nvr-network
 ```
 
-The output should list `caddy`, `frigate`, and `portainer` as connected containers. If any are missing:
+The output should list `caddy`, `frigate`, `portainer`, `ntfy`, and `dozzle` among the connected containers. If any are missing:
 
 ```bash
 docker network connect nvr-network <container-name>
@@ -284,7 +290,7 @@ Caddy uses its own internal certificate authority for `.internal` hostnames. You
 - **Firefox:** Advanced → Accept the Risk and Continue
 - **Safari:** Show Details → visit this website
 
-If you want to eliminate the warning entirely, you can install Caddy's root certificate on your device. See Step 4 in the [Caddy guide](../network/caddy-reverse-proxy.md) for details.
+If you want to eliminate the warning entirely, you can install Caddy's root certificate on your device. See [Trust the certificate](../network/caddy-reverse-proxy.md#step-2-trust-the-certificate) in the Caddy guide for details.
 
 A certificate warning means DNS and Caddy are both working. You're done troubleshooting.
 
@@ -341,7 +347,7 @@ Visit [lanfoundry.com/support](https://lanfoundry.com/support) for support optio
 
 When you open a support request, include:
 
-- Which hostname isn't working (`frigate.internal`, `portainer.internal`, or `cockpit.internal`)
+- Which hostname isn't working (for example `frigate.internal` or `ntfy.internal`)
 - The device you're testing from and its operating system
 - The output of `nslookup` for the failing hostname, and `Resolve-DnsName` if you're on Windows
 - Whether the issue affects all devices on your network or just one

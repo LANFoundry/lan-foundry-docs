@@ -1,6 +1,25 @@
 /* LAN Foundry brand palette — see "LAN Foundry Brand Guidelines.pdf"
    Ink / Slate / Line / Paper carry every layout; Molten Copper is the only
-   accent. Deeper copper on light surfaces, brighter copper on dark. */
+   accent. Deeper copper on light surfaces, brighter copper on dark.
+
+   Light-scheme copper is #AF5916, not the guide's base #DC701C: the base
+   value only reaches 3.12:1 against Paper (#F7F9FB), short of WCAG AA's
+   4.5:1 text floor — it's every inline link and the feedback button in
+   light mode. #AF5916 keeps the same hue/saturation, just darker (HSL
+   lightness 48.6% -> 38.6%), and clears AA at 4.67:1. Dark-scheme copper
+   (#EA7D2E on Ink, 6.29:1) already passes and is untouched. */
+
+:root {
+  /* Shared, scheme-independent tokens. --lf-text-sm is the repeated small
+     body/label size used across the feedback form and toast; --lf-error-color
+     is the toast's error-state accent (DESIGN.md's documented error color). */
+  --lf-text-sm: 0.85rem;
+  --lf-error-color: #D64545;
+  /* Icon-glyph step, distinct from the body/small/label text ramp in
+     DESIGN.md — used for the tab-scroll chevrons, the only icon-sized glyph
+     in the system today. */
+  --lf-icon-size: 1.2rem;
+}
 
 [data-md-color-scheme="default"] {
   --md-default-bg-color: #F7F9FB;
@@ -20,14 +39,14 @@
   --md-primary-bg-color: #14191F;
   --md-primary-bg-color--light: #313942;
 
-  --md-accent-fg-color: #DC701C;
-  --md-accent-fg-color--transparent: #DC701C1a;
+  --md-accent-fg-color: #AF5916;
+  --md-accent-fg-color--transparent: #AF59161a;
   --md-accent-bg-color: #F7F9FB;
   --md-accent-bg-color--light: #F7F9FB;
 
   --md-typeset-color: #14191F;
-  --md-typeset-a-color: #DC701C;
-  --md-typeset-mark-color: #DC701C33;
+  --md-typeset-a-color: #AF5916;
+  --md-typeset-mark-color: #AF591633;
 
   --md-code-bg-color: #E2E5E8;
   --md-code-fg-color: #14191F;
@@ -38,6 +57,9 @@
   --md-footer-bg-color--dark: #E2E5E8;
   --md-footer-fg-color: #14191F;
   --md-footer-fg-color--light: #313942;
+  /* Material's default (#ffffff73) colors the "Made with" copyright line;
+     on the Line footer strip that was ~1.1:1. Slate keeps it readable. */
+  --md-footer-fg-color--lighter: #313942;
 }
 
 [data-md-color-scheme="slate"] {
@@ -187,7 +209,7 @@
   opacity: 0;
   transition: opacity 0.15s ease;
   color: var(--md-accent-fg-color);
-  font-size: 1.2rem;
+  font-size: var(--lf-icon-size);
   font-weight: 700;
 }
 .md-tabs__fade--left { left: 0; }
@@ -249,7 +271,7 @@
 }
 
 .lf-feedback__intro {
-  font-size: 0.85rem;
+  font-size: var(--lf-text-sm);
   color: var(--md-default-fg-color--light);
   margin-bottom: 1rem;
 }
@@ -259,7 +281,7 @@
 }
 
 .lf-feedback__field label {
-  font-size: 0.85rem;
+  font-size: var(--lf-text-sm);
   display: block;
   margin-bottom: 0.25rem;
 }
@@ -272,7 +294,7 @@
   border-radius: 6px;
   background: var(--md-default-bg-color);
   color: var(--md-default-fg-color);
-  font-size: 0.85rem;
+  font-size: var(--lf-text-sm);
   font-family: var(--md-text-font);
 }
 
@@ -283,10 +305,17 @@
 .lf-feedback__submit {
   padding: 0.5rem 1.25rem;
   background: var(--md-accent-fg-color);
-  color: var(--md-primary-bg-color);
+  /* --md-default-bg-color, not --md-primary-bg-color: this button sits on
+     accent-colored copper, not on the header/footer chrome, so its text
+     needs the page's own background polarity (Paper-on-copper in light
+     scheme, Ink-on-copper in dark scheme), not the chrome's inverted one.
+     Using --md-primary-bg-color put Ink text on light-scheme copper at
+     3.6:1, short of WCAG AA's 4.5:1 — this pairing clears 4.67:1 (light)
+     and 6.29:1 (dark). See DESIGN.md's AA Floor Rule. */
+  color: var(--md-default-bg-color);
   border: none;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: var(--lf-text-sm);
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -294,6 +323,16 @@
 
 .lf-feedback__submit:hover {
   opacity: 0.85;
+}
+
+/* Touch target: the padding above alone renders at ~32-34px tall, under the
+   44px comfort floor for touch. Scoped to coarse pointers only so the
+   desktop/mouse button keeps its original visual weight. */
+@media (pointer: coarse) {
+  .lf-feedback__submit {
+    min-height: 44px;
+    padding-block: 0.75rem;
+  }
 }
 
 /* Toast notification for form submissions — see javascripts/brand.js */
@@ -309,7 +348,7 @@
   border-left: 3px solid var(--md-accent-fg-color);
   border-radius: 6px;
   padding: 0.9rem 1.25rem;
-  font-size: 0.85rem;
+  font-size: var(--lf-text-sm);
   line-height: 1.5;
   box-shadow: 0 12px 32px rgba(0,0,0,0.3);
   opacity: 0;
@@ -322,4 +361,15 @@
   transform: translateX(-50%) translateY(0);
   pointer-events: auto;
 }
-.lf-toast.is-error { border-left-color: #D64545; }
+.lf-toast.is-error { border-left-color: var(--lf-error-color); }
+
+/* Reduced motion: keep the opacity fade (it's the actual state signal — a
+   toast appearing/disappearing) but drop the vertical slide, since that's
+   pure decoration on top of the same state change. */
+@media (prefers-reduced-motion: reduce) {
+  .lf-toast,
+  .lf-toast.is-visible {
+    transform: translateX(-50%);
+    transition: opacity 0.2s ease;
+  }
+}

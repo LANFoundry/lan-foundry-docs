@@ -1,8 +1,11 @@
 # Remote access with WireGuard
 
-Tailscale, covered in [Remote access with Tailscale](tailscale.md), is the option Argus ships pre-installed and ready to go. WireGuard is the option for people who'd rather not depend on anyone else's infrastructure at all, not even a control plane that only sees device metadata and never your traffic, the way Tailscale's does.
+Tailscale, covered in [Remote access with Tailscale](tailscale.md), is the option included in the Vigil, Sentinel, and Warden stack, ready to activate. WireGuard is the option for people who'd rather not depend on anyone else's infrastructure at all, not even a control plane that only sees device metadata and never your traffic, the way Tailscale's does.
 
 WireGuard is a VPN protocol, not a service. There's no account to sign up for and nothing hosted on your behalf. If your router has a built-in WireGuard server, you're building a private, encrypted tunnel straight into your own network using nothing but your own hardware. The cost of that independence is that you do the work Tailscale otherwise automates: the router needs to support it in the first place, you forward a port yourself, and you configure each device by hand.
+
+!!! note "Not applicable to Enclave"
+    Forwarding a port requires a router with a WAN connection to forward it on. [Enclave](enclave-tier.md) pairs with an air-gapped network with no WAN connectivity by design; kiosk mode on an attached monitor is the interface for that tier.
 
 ---
 
@@ -55,7 +58,7 @@ Your phone, out on the internet, has no way to find your router unless something
 
 On OPNsense, add a **port forward** under **Firewall → NAT → Port Forward**: WAN interface, UDP, the WireGuard port, forwarding to the router's own LAN address (since the WireGuard server runs on the router itself, this is a forward to the firewall's own IP, which OPNsense supports directly).
 
-This is the one place in this setup that genuinely widens your attack surface: a UDP port is now reachable from anywhere on the internet. That's an intentional tradeoff, not an oversight, and it's the same tradeoff any self-hosted VPN makes. What keeps it safe is that WireGuard doesn't respond to anything that isn't cryptographically valid; an unauthenticated packet is silently dropped, not rejected with an error that would confirm the port is even open. Forward only this one port, and resist the urge to also forward the router's admin UI "just in case," that's a separate, much larger risk.
+This is the one place in this setup that genuinely widens your attack surface: a UDP port is now reachable from anywhere on the internet. It's the same tradeoff any self-hosted VPN makes. What keeps it safe is that WireGuard doesn't respond to anything that isn't cryptographically valid; an unauthenticated packet is silently dropped, not rejected with an error that would confirm the port is even open. Forward only this one port, and resist the urge to also forward the router's admin UI "just in case," that's a separate, much larger risk.
 
 ---
 
@@ -99,7 +102,7 @@ When everything is working:
 - Hostname URLs like `https://frigate.internal` load if you configured the client's DNS to point at your router
 - OPNsense's **VPN → WireGuard → Status** page shows the peer with a recent handshake
 
-If the tunnel shows as active but nothing loads, check that the peer's `AllowedIPs` actually includes your LAN subnet, not just the tunnel range. If there's no handshake at all, confirm the port forward is in place and that you're using the router's actual public IP or a hostname that resolves to it.
+If the tunnel shows as active but nothing loads, check the peer's `AllowedIPs`: it needs your LAN subnet listed alongside the tunnel range. If there's no handshake at all, confirm the port forward is in place and that you're using the router's actual public IP or a hostname that resolves to it.
 
 ---
 

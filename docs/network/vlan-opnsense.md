@@ -115,7 +115,10 @@ When a camera connects to a switch port assigned to VLAN 10, it will automatical
 
 Firewall rules control what traffic is allowed to flow between your camera VLAN and the rest of your network. You'll create six rules across two interfaces.
 
-A note on how OPNsense evaluates rules: rules are processed top to bottom and the first matching rule wins. Allow rules must always appear above block rules on the same interface, otherwise traffic gets blocked before the allow rule is ever checked.
+!!! warning "Rule order matters — allow rules go above block rules"
+    OPNsense processes rules top to bottom on each interface and stops at the first match. If a block rule sits above the allow rule it's meant to make an exception for, the block wins and the allow rule is never reached.
+
+    This fails silently: nothing errors, the camera just never gets a DHCP lease or never becomes reachable, with no obvious link back to rule order as the cause. Create Rules 1 and 2 (Pass) before Rules 3 and 4 (Block) on the camera VLAN interface, and Rule 5 (Pass) before Rule 6 (Block) on the LAN interface — the order they're numbered below is the order they need to end up in.
 
 ### Camera VLAN interface rules
 
@@ -230,6 +233,9 @@ Click **Save**, then **Apply changes**.
 
 With the VLAN, DHCP, and firewall rules in place, connect a camera to a switch port assigned to VLAN 10 and verify the following:
 
+**Rules are in the correct order**
+Before troubleshooting anything else, revisit **Firewall**, then **Rules**, on both the camera VLAN and LAN interfaces. Confirm Rules 1 and 2 sit above Rules 3 and 4 on the camera VLAN interface, and Rule 5 sits above Rule 6 on the LAN interface. If any of the checks below fail, a rule out of order is the most likely cause — see the warning in Step 5.
+
 **Camera receives an IP address**
 Check your camera's network settings or look in OPNsense under **Services**, then **Dnsmasq DNS & DHCP**, then **Leases** to see if the camera has received an address in your defined range.
 
@@ -249,6 +255,37 @@ From a device on your main LAN that is not the NVR, try to browse to the camera'
 
 **Camera cannot reach the internet**
 In OPNsense, navigate to **Firewall**, then **Log Files**, then **Live View** and filter for your camera VLAN interface. Watch for blocked outbound entries from camera IP addresses to external destinations. These confirm that Rule 4 is catching phone-home attempts.
+
+---
+
+## Advanced: automating rule creation with the OPNsense API
+
+If you're comfortable scripting this instead of clicking through six rule forms, OPNsense exposes a REST API for firewall rules. This is a narrower, safer target than editing `config.xml` directly: `config.xml` is a single file covering your entire router's state (certificates, packages, everything), and hand-splicing rule blocks into it risks touching something unrelated or leaving the file in a state the GUI can't parse. The API only ever touches the rule you tell it to.
+
+!!! warning "Higher stakes than Frigate's config.yml"
+    A mistake here can misconfigure your firewall, with effects well beyond a single container. Test API calls against a rule you can already see and undo in the GUI before scripting bulk changes, and always confirm with **Firewall → Rules** afterward.
+
+**Set up credentials**: In the OPNsense web interface, go to **System**, then **Access**, then **Users**, open your account, and add an **API key**. This downloads a key/secret pair — treat it like a password; anyone with it can change your firewall.
+
+**Authenticate**: OPNsense's API uses HTTP Basic Auth over HTTPS, with the API key as the username and the secret as the password:
+
+```bash
+curl -k -u "API_KEY:API_SECRET" \
+  "https://192.168.1.1/api/firewall/filter/searchRule"
+```
+
+(`-k` skips certificate verification, since OPNsense's `local_certs` setup uses a self-signed or internal CA by default — same reasoning as Caddy's `tls internal` elsewhere in this stack. Drop it if you've imported a trusted cert.)
+
+**Learn the exact field shape from a rule you already made**, rather than guessing it: create Rule 1 through the GUI as described above, then fetch it back with `searchRule` and find it in the response by its description ("Allow cameras to DHCP server"). The JSON you get back is the authoritative shape for your installed OPNsense version — field names have changed across versions, so this is more reliable than any example a guide could hardcode. Use that shape as the template for scripting Rules 2-6, or for any rule changes you want to automate going forward, via the corresponding `addRule` / `setRule` / `delRule` endpoints under `/api/firewall/filter/`.
+
+**Apply your changes**: rules created via the API aren't live until you apply them, same as clicking **Apply changes** in the GUI:
+
+```bash
+curl -k -u "API_KEY:API_SECRET" -X POST \
+  "https://192.168.1.1/api/firewall/filter/apply"
+```
+
+For the full endpoint reference and request/response schemas for your version, see [OPNsense's API documentation](https://docs.opnsense.org/development/api.html).
 
 ---
 

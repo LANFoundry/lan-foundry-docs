@@ -2,7 +2,9 @@
 
 This guide walks through connecting a camera to Frigate on your Argus NVR so live view works and recordings start. If you've completed your network setup and Frigate is running, this is the next step.
 
-Argus systems ship with **Amcrest** cameras already prepared for local NVR use: DHCP is enabled, RTSP is on, and a default password is set. If you upgraded to **Ubiquiti** cameras, see the [Ubiquiti cameras section](#ubiquiti-cameras) below — that hardware uses a different setup flow. This guide covers Amcrest first, then Ubiquiti.
+Argus systems ship with **Amcrest** cameras already prepared for local NVR use: DHCP is enabled, RTSP is on, and a default password is set. This guide covers adding an Amcrest camera to Frigate.
+
+**On this page:** [Before you start](#before-you-start) · [Step 1: Connect the camera](#step-1-connect-the-camera-and-find-its-ip-address) · [Step 2: Camera settings](#step-2-optional-camera-settings) · [Step 3: Add it in Frigate](#step-3-add-the-camera-in-frigate) · [Step 4: Confirm the feed](#step-4-confirm-the-feed) · [Adding another camera](#adding-another-camera) · [Advanced: editing config.yml](#advanced-editing-configyml-directly)
 
 ---
 
@@ -39,14 +41,14 @@ That usually means browsing to the camera's web interface or using the manufactu
 
 On Argus systems, cameras are prepared so this guide can focus on Frigate rather than factory defaults:
 
-| Setting | Amcrest (included) | Ubiquiti (upgrade) |
-|---|---|---|
-| DHCP | Enabled | Enabled |
-| RTSP | Enabled | Enabled |
-| Login | Username `admin`, default password set at the factory | See [Ubiquiti cameras section](#ubiquiti-cameras) below |
-| Cloud / phone-home | Disabled or minimized where the camera allows | Configured for local use |
+| Setting | Amcrest (included) |
+|---|---|
+| DHCP | Enabled |
+| RTSP | Enabled |
+| Login | Username `admin`, default password set at the factory |
+| Cloud / phone-home | Disabled or minimized where the camera allows |
 
-Your Argus welcome materials include the camera password for Amcrest systems. We do not publish default passwords in this documentation. If you changed the password after receiving the system, use your current password when adding the camera to Frigate.
+Your Argus welcome materials include the camera password. We do not publish default passwords in this documentation. If you changed the password after receiving the system, use your current password when adding the camera to Frigate.
 
 ---
 
@@ -56,7 +58,7 @@ Your Argus welcome materials include the camera password for Amcrest systems. We
 2. Power the camera on and wait for it to boot. PoE cameras may take a minute.
 3. Confirm the camera received an IP address from DHCP.
 
-In OPNsense, open **Services**, then **DHCPv4**, then **Leases**. Select your camera VLAN interface and look for a new lease matching the camera's MAC address. Note the IP address — you'll enter it in Frigate in the next step.
+In OPNsense, open **Services**, then **Dnsmasq DNS & DHCP**, then **Leases**. Look for a new lease in your camera VLAN's range matching the camera's MAC address. Note the IP address — you'll enter it in Frigate in the next step.
 
 If no lease appears, check cabling, switch VLAN assignment, and PoE before proceeding. See [Camera feed not showing in Frigate](../troubleshooting/camera-feed.md) if the camera never gets an address.
 
@@ -120,10 +122,6 @@ Click **Next**. The validation screen confirms Frigate can reach all assigned st
 ![Frigate validation screen showing stream connectivity confirmed before saving](../assets/images/cameras/cameraValidation.png){ width="700" }
 
 Click **Save new camera**.
-
-### Ubiquiti cameras
-
-If you upgraded to Ubiquiti cameras, see the [Ubiquiti cameras section](#ubiquiti-cameras) below. The setup flow differs from Amcrest.
 
 ---
 
@@ -191,8 +189,6 @@ rtsp://admin:YOUR_PASSWORD@192.168.10.101:554/cam/realmonitor?channel=1&subtype=
 ```
 
 Replace `YOUR_PASSWORD` and the IP address with your values.
-
-**Ubiquiti cameras** use token-based authentication instead of a username/password in the URL. See the [Ubiquiti cameras section](#ubiquiti-cameras) below for stream URL format and config.yml examples.
 
 #### Test a stream URL before editing Frigate
 

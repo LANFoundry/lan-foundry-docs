@@ -1,144 +1,172 @@
 # Filtering which events trigger notifications
 
-This guide covers how to control which detections send notifications to your phone. Out of the box, Frigate will alert you on every detected object across every camera, which gets noisy fast. A few config changes narrow that down to what actually matters.
+This guide covers how to control which detections send notifications to your phone. Argus systems ship with frigate-notify set to alert on every object Frigate detects, across every camera, which gets noisy fast. A few lines in frigate-notify's config narrow that down to what actually matters.
 
-This guide assumes ntfy is set up and you're already receiving notifications. See [Setting up ntfy for push notifications](ntfy-setup.md) if you haven't done that yet.
+This guide assumes push notifications are set up and you're already receiving them. See [Setting up push notifications](ntfy-setup.md) if you haven't done that yet.
 
 ---
 
 ## Before you start
 
-- ntfy is configured and notifications are arriving on your phone
-- Frigate's `config.yml` is accessible via Portainer or SSH
+- Notifications are arriving on your phone
+- You can edit `/opt/lanfoundry/config/frigate-notify/config.yml` on the NVR over SSH (with `sudo nano`). It's mounted read-only into the container, so edit it on the host
 - If you want to filter by zone, you'll need zones defined on your cameras. See [Setting up recording zones and motion detection](../cameras/zones-motion.md) for how to create them.
 
 ---
 
-## How Frigate decides what to notify
+## How filtering works
 
-Every time Frigate finishes tracking a detection event, it checks it against your notification configuration. If the event matches — right object type, right zone, above the confidence threshold — it sends a notification to ntfy. If no filters are configured, every detected object on every camera notifies.
+```
+Frigate → frigate-notify → ntfy → your phone
+```
 
-The filters below layer on top of each other. You can use any combination.
+Frigate detects objects and records events. It doesn't send notifications itself. **frigate-notify** checks Frigate for new events every 30 seconds and decides which ones become notifications, so that's where notification filters live: in the `alerts` section of `/opt/lanfoundry/config/frigate-notify/config.yml`.
+
+If no filters are configured, every event on every camera sends a notification. The filters below layer on top of each other, and you can use any combination.
+
+!!! warning "Add filters under the existing `alerts:` and `frigate:` keys"
+    frigate-notify's `config.yml` already has an `alerts:` section (holding the `ntfy:` settings) and a `frigate:` section. Add the snippets below *inside* those sections rather than pasting a second `alerts:` or `frigate:` line. A second `alerts:` line either stops the config from loading or replaces the first section, ntfy settings included. [Putting it together](#putting-it-together) shows a complete file.
 
 ---
 
-## Step 1 — Filter by object type
+## Step 1: Filter by object type
 
 The most effective first filter. Rather than alerting on every object Frigate can detect, limit it to the ones you care about.
 
-In `config.yml`, add an `objects` list under your ntfy notification config:
+Under `alerts:`, add a `labels` section with an `allow` list:
 
 ```yaml
-notifications:
-  ntfy:
-    base_url: http://YOUR_NVR_IP:2586
-    topic: YOUR_TOPIC
-    objects:
+alerts:
+  labels:
+    allow:
       - person
       - car
 ```
 
-Common object types Frigate can detect: `person`, `car`, `dog`, `cat`, `bicycle`, `motorcycle`, `truck`. Start with just `person` and `car` if you're unsure — you can always add more later.
+With an `allow` list set, every other object type is ignored. Common object types Frigate can detect: `person`, `car`, `dog`, `cat`, `bicycle`, `motorcycle`, `truck`. Start with just `person` and `car` if you're unsure. You can always add more later.
 
-After saving, restart the Frigate container in Portainer for the change to take effect.
+If you'd rather keep most object types and drop one or two, use `block` instead. Anything in `block` is always ignored, even if it's also in `allow`:
+
+```yaml
+alerts:
+  labels:
+    block:
+      - bird
+```
 
 ---
 
-## Step 2 — Require detections to enter a specific zone
+## Step 2: Only notify for specific zones
 
-If object-type filtering still produces more alerts than you want, zone filtering is the next step. This lets you say "only notify me if a person enters the driveway, not just anywhere in frame."
+If object-type filtering still produces more alerts than you want, zone filtering is the next step. This lets you say "only notify me if a person is in the driveway, not anywhere in frame."
 
-Zones must be created in your camera config before you can filter on them. See [Setting up recording zones and motion detection](../cameras/zones-motion.md) if you haven't set up zones yet.
+Zones must be created in your camera config in Frigate before you can filter on them. See [Setting up recording zones and motion detection](../cameras/zones-motion.md) if you haven't set up zones yet.
 
-Once you have a zone defined, add a `required_zones` filter to the relevant camera:
+Under `alerts:`, add a `zones` section:
 
 ```yaml
-cameras:
-  front_door:
-    objects:
-      filters:
-        person:
-          required_zones:
-            - driveway
+alerts:
+  zones:
+    unzoned: drop
+    allow:
+      - driveway
 ```
 
-With this config, a person walking along the edge of the frame — technically detected, but not entering the driveway zone — won't trigger a notification. Only detections that cross into `driveway` will.
+- `allow` lists the zones that can send notifications. Events in other zones are ignored.
+- `unzoned: drop` also ignores events that aren't in *any* zone. Without it, frigate-notify still notifies on unzoned events even when an `allow` list is set, which is usually not what you want.
+- `block` (optional) lists zones that never send notifications, and takes priority over `allow`.
 
-You can require multiple zones (the object must enter all of them) or adjust per-object as needed.
+One limitation to know about: Argus's frigate-notify setup checks Frigate's API for new events rather than following each event live, so it sees an event's zones once, at the moment it picks the event up. Someone who crosses into the driveway after that check may not trigger a notification. Each event sends at most one notification either way.
 
 ---
 
-## Step 3 — Disable notifications for specific cameras
+## Step 3: Turn off notifications for specific cameras
 
-If you have an indoor camera you don't want generating alerts at all, you can turn off notifications for it without removing it from your Frigate config.
+If you have an indoor camera you don't want generating alerts at all, you can exclude it from notifications without removing it from Frigate.
+
+This one goes under the existing `frigate:` section, not `alerts:`:
 
 ```yaml
-cameras:
-  indoor_office:
-    notifications:
-      enabled: False
+frigate:
+  cameras:
+    exclude:
+      - indoor_office
 ```
 
-This disables ntfy notifications for that camera only. Recording and detection continue normally.
+Use the camera name exactly as it appears in Frigate's `config.yml`. Recording and detection on that camera continue normally; it just never sends a notification.
 
 ---
 
-## Step 4 — Adjust the confidence threshold
+## Step 4: Raise the confidence threshold
 
-Frigate assigns a confidence score between 0 and 1 to each detection. A `min_score` of `0.5` means Frigate is at least 50% confident it detected the object correctly. Lower scores mean more alerts; higher scores mean fewer but more reliable ones.
+Frigate gives each detection a confidence score. frigate-notify can skip events below a minimum score, which cuts down false positives like a shadow briefly detected as a person.
 
-The default threshold varies by object type, but if you're getting a lot of false positives, raising `min_score` is a good first adjustment:
+Under `alerts:`, add `min_score` to the `labels` section:
 
 ```yaml
-objects:
-  filters:
-    person:
-      min_score: 0.7
+alerts:
+  labels:
+    min_score: 70
 ```
 
-`0.7` is a reasonable starting point for most setups. If you're missing real events, lower it slightly. If false positives persist, try `0.75` or higher.
+frigate-notify uses a **0–100** scale here, based on the highest score Frigate gave the object during the event. `70` means "only notify if Frigate was at least 70% confident at some point." If you're missing real events, lower it. If false positives persist, try `75` or `80`.
 
-This filter lives under `objects` at the top level of `config.yml`, not under the notifications block — it affects detection scoring globally, which in turn affects what notifications are generated.
+This only affects notifications. Frigate keeps detecting and recording low-confidence objects as before. Frigate's own `config.yml` has separate score thresholds (on a 0–1 scale) that change what it detects in the first place, which affects recordings and the review timeline too. Start with frigate-notify's setting; it's easier to undo.
 
 ---
 
 ## Putting it together
 
-A typical config combining object filtering, zone filtering, and a confidence threshold:
+A complete frigate-notify `config.yml` combining object filtering, zone filtering, an excluded camera, and a confidence threshold, built on the Argus defaults from [Setting up push notifications](ntfy-setup.md#frigate-notify):
 
 ```yaml
-notifications:
-  ntfy:
-    base_url: http://YOUR_NVR_IP:2586
-    topic: YOUR_TOPIC
-    objects:
+app:
+  mode: events
+
+frigate:
+  server: http://frigate.nvr-network:5000
+  ignoressl: false
+  webapi:
+    enabled: true
+    interval: 30
+  startup_check:
+    attempts: 5
+    interval: 30
+  cameras:
+    exclude:
+      - indoor_office
+
+alerts:
+  labels:
+    min_score: 70
+    allow:
       - person
       - car
-
-cameras:
-  front_door:
-    objects:
-      filters:
-        person:
-          required_zones:
-            - driveway
-  indoor_office:
-    notifications:
-      enabled: False
-
-objects:
-  filters:
-    person:
-      min_score: 0.7
-    car:
-      min_score: 0.6
+  zones:
+    unzoned: drop
+    allow:
+      - driveway
+  ntfy:
+    enabled: true
+    server: http://ntfy.nvr-network:80
+    topic: argus-XXXXXX
+    ignoressl: false
 ```
 
-Restart Frigate after any changes to `config.yml`.
+Keep your own `topic` value. Don't copy `argus-XXXXXX` over it.
+
+Restart frigate-notify after any change to its `config.yml`:
+
+```bash
+docker restart frigate-notify
+docker logs frigate-notify --tail 30
+```
+
+Check the logs for config errors, then walk in front of a camera to confirm notifications still arrive for the events you kept. If nothing arrives at all, see [Not receiving notifications](../troubleshooting/notifications.md#check-frigate-notify).
 
 ---
 
 ## Where to go from here
 
-- [Setting up notification quiet hours](schedules.md) — limit alerts to certain hours of the day
-- [Setting up recording zones and motion detection](../cameras/zones-motion.md) — create the zones used for zone-based filtering
+- [Setting up notification quiet hours](schedules.md), to limit alerts to certain hours of the day
+- [Setting up recording zones and motion detection](../cameras/zones-motion.md), to create the zones used for zone-based filtering

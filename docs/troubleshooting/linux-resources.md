@@ -2,7 +2,7 @@
 
 This guide is not a step-by-step fix for a single problem. It is a map of where to go when you have worked through the LAN Foundry troubleshooting guides and still need help, or when your question is about Linux, Docker, or the NVR host rather than Frigate configuration or camera streams.
 
-Argus systems run **Ubuntu Server** without a desktop. Most administration happens over **SSH** or **Cockpit** for basic host metrics. Deeper storage checks use the command line (`zpool`, `smartctl`) as described in [Drive and pool errors](drive-errors.md).
+Argus systems run **Ubuntu Server** without a desktop. Most administration happens over **SSH** or **Cockpit** for basic host metrics. The exception is [Enclave](../network/enclave-tier.md), which boots into a full-screen Frigate kiosk on an attached monitor and has no SSH or Cockpit access; run commands from its local terminal instead. Deeper storage checks use the command line (`zpool`, `smartctl`) as described in [Drive and pool errors](drive-errors.md).
 
 ---
 
@@ -35,6 +35,9 @@ If none of those fit, the sections below point to official documentation and com
 ---
 
 ## Connecting to the NVR
+
+!!! note "On Enclave"
+    SSH and Cockpit both need another device to reach the NVR over the network, which [Enclave](../network/enclave-tier.md) doesn't allow. Use `Ctrl+Alt+T` for a terminal over the kiosk view, or `Ctrl+Alt+F2` for a separate login console. To move files off the box, copy them to a USB drive as described in [Exporting footage](../network/enclave-tier.md#exporting-footage).
 
 ### SSH from another computer on your LAN
 
@@ -130,7 +133,6 @@ Network and firewall problems on Argus systems usually involve OPNsense rules, V
 | Task | Command (on the NVR) |
 |---|---|
 | Test RTSP port on a camera | `nc -zv 192.168.10.101 554` |
-| Test Ubiquiti RTSP port | `nc -zv 192.168.10.101 7447` |
 | Test an RTSP stream | `ffprobe -rtsp_transport tcp "rtsp://..."` |
 
 For DNS, Caddy, VLANs, and firewall layout, start with [Setting up a camera VLAN in OPNsense](../network/vlan-opnsense.md) or [Can't reach a service by hostname](hostname.md) depending on your symptom.
@@ -170,7 +172,7 @@ Whether you post in a community forum or open a LAN Foundry support ticket, diag
 
 **Always useful**
 
-- Argus tier (Vigil, Sentinel, or Warden) if you purchased from LAN Foundry
+- Argus tier (Vigil, Sentinel, Warden, or Enclave) if you purchased from LAN Foundry
 - Ubuntu version: `lsb_release -a`
 - What you expected vs. what happened
 - What changed recently (updates, new cameras, config edits)

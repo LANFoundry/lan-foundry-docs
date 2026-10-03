@@ -40,7 +40,7 @@ Do not use desktop drives (WD Blue, Seagate Barracuda) in a pool that records co
 
 When ZFS replaces a drive in the pool, it **resilvers**: it reads all data from the remaining drives and writes it onto the new drive to restore redundancy. This is normal and expected. A few things to know:
 
-- The pool stays **ONLINE and accessible during the resilver**. Frigate continues recording.
+- The pool stays **online and accessible during the resilver**, and Frigate continues recording. If you're replacing a failed drive, `zpool status` shows the pool as **DEGRADED** until the resilver finishes. That's expected.
 - Resilvering takes time. On a lightly used pool with smaller drives it may finish in an hour or two. On a full Warden pool with large drives it can take many hours.
 - **Do not remove or replace any other drive while a resilver is in progress.** On RAID-Z2 systems (Sentinel and Warden) you have two-drive tolerance, but using it while resilvering reduces you to one. On Vigil (RAID-Z1) removing a second drive during a resilver destroys the pool.
 - After the resilver finishes, the pool returns to **ONLINE** with full redundancy restored.

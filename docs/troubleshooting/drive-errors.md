@@ -14,7 +14,7 @@ This guide assumes:
 
 - You can **SSH into the NVR**, or use Cockpit at `https://cockpit.internal` for basic system overview
 - Frigate has been recording, or was until the problem started
-- You're troubleshooting storage on the NVR itself, not a camera's SD card
+- You're troubleshooting storage on the NVR itself
 
 Throughout this guide, example IP addresses are used for clarity. Replace them with the addresses from your own network:
 
@@ -27,7 +27,7 @@ If Frigate won't load at all and containers are crashing, also check [What to do
 
 ## How storage is set up on Argus systems
 
-Argus systems use **two separate storage layers**: a small fast drive for the operating system, and a larger pool of NAS-rated hard drives where Frigate stores recordings.
+Argus systems use **two separate storage layers**: a small fast drive for the operating system, and a larger pool of NAS-rated hard drives where Frigate stores recordings. Enclave uses Sentinel's layout exactly. For every tier side by side, see [Argus tiers at a glance](../argus-tiers.md).
 
 ### Boot drive (operating system)
 
@@ -100,7 +100,8 @@ lsblk
 
 - **ONLINE** on all pool drives (healthy)
 - **DEGRADED** (a drive failed; pool still running with reduced redundancy)
-- **FAULTED** (pool is not usable; recordings may be inaccessible)
+- **FAULTED** on the pool's `state:` line (pool is not usable; recordings may be inaccessible)
+- **FAULTED** on a single drive while the pool shows DEGRADED (that drive has failed; the pool is still running)
 - **UNAVAIL** on a drive (missing or not responding)
 - **resilvering** or **scrub** in progress (rebuild or consistency check running)
 
@@ -204,7 +205,7 @@ Look at the filesystem where Frigate stores recordings. Anything at **95% or abo
 **Short-term relief:**
 
 - Reduce retention in your Frigate `config.yml` and restart Frigate
-- Remove old recordings you no longer need from the storage path Frigate uses
+- Let Frigate do the deleting: once retention is shorter, Frigate removes recordings past the new limit on its next cleanup. Avoid deleting recording files by hand from Frigate's storage path; Frigate's database still references them
 - Temporarily disable recording on non-essential cameras
 
 **Longer term:**
@@ -251,15 +252,17 @@ When a hard drive in the recording pool fails, ZFS keeps the pool online if redu
 | **Sentinel** (RAID-Z2, 4 drives) | 2 parity drives | Tolerates 2 failures | 1 failure remaining. Replace the failed drive promptly. |
 | **Warden** (RAID-Z2, 8 drives) | 2 parity drives | Tolerates 2 failures | 1 failure remaining. Replace the failed drive promptly. |
 
-A second failure on Vigil while the pool is already degraded can mean **lost recordings**. On Sentinel and Warden, a second failure while degraded is also an emergency, but you still have one parity drive in reserve until a third fails on Sentinel (two on Warden before total loss).
+On **Vigil**, a second drive failure while the pool is degraded loses the pool and the recordings on it. On **Sentinel** and **Warden**, the pool survives a second failure, but with no redundancy left; a third failure before the replacements finish resilvering loses it. On every tier, a degraded pool is urgent: the goal is to get back to full redundancy before another drive fails, and resilvering puts extra load on the drives you still have.
 
 ### What to do when the pool is DEGRADED
+
+**The short version:** get a matching replacement drive, then follow [Replace a failed or failing drive](../storage/adding-storage.md#scenario-1-replace-a-failed-or-failing-drive). The steps below are what to do around that.
 
 1. **Do not ignore it.** The pool is running without full redundancy.
 2. **Back up your Frigate config** and any footage you cannot afford to lose.
 3. **Identify the failed drive** from `zpool status`. Note the device name, slot, and serial number if visible.
-4. **Replace the failed HDD** with a compatible NAS-rated drive. Exact replacement procedure will be covered in [Adding more storage](../storage/adding-storage.md).
-5. **Let the resilver complete** before heavy maintenance. Rebuilding stresses the remaining drives.
+4. **Replace the failed HDD** with a compatible NAS-rated drive, following [Replace a failed or failing drive](../storage/adding-storage.md#scenario-1-replace-a-failed-or-failing-drive). It covers matching the device name to the physical bay, swapping the drive, and starting the resilver.
+5. **Let the resilver complete** before heavy maintenance. Rebuilding stresses the remaining drives. Don't remove or replace any other drive until it finishes.
 
 Monitor progress:
 
@@ -269,7 +272,7 @@ zpool status
 
 While degraded, avoid unnecessary reboots and large bulk copies unless you're actively backing up. The priority is replacing the failed member and restoring full redundancy.
 
-If `zpool status` shows **FAULTED**, the pool is not serving data normally. Contact support if you are on Argus hardware.
+If the pool's own `state:` line shows **FAULTED**, the pool is not serving data normally. Don't try to replace drives yourself at that point; contact support if you are on Argus hardware. A single drive marked FAULTED inside a DEGRADED pool is different: that's the normal drive-replacement case above.
 
 ---
 
@@ -339,12 +342,12 @@ Use this when warnings are worsening, you see pending or uncorrectable sectors, 
 
 ### Act now (S.M.A.R.T. failed or physical symptoms)
 
-Use this when a pool drive health is **FAILED**, uncorrectable errors are present, you hear clicking or grinding, the pool is **FAULTED**, or a drive is not detected.
+Use this when a pool drive health is **FAILED**, uncorrectable errors are present, you hear clicking or grinding, the pool itself is **FAULTED**, or a drive is not detected.
 
 - **Stop assuming the drive is reliable.** Further writes may fail without warning.
 - **Back up what you can** while the pool still responds. Do not wait for a convenient time.
 - **Do not run destructive tests** such as long bad-sector scans unless support specifically asks you to.
-- **Replace the failed pool drive** and allow the resilver to finish. On Vigil, treat any DEGRADED pool as urgent because there is no redundancy margin left.
+- **Replace the failed pool drive** ([Replace a failed or failing drive](../storage/adding-storage.md#scenario-1-replace-a-failed-or-failing-drive)) and allow the resilver to finish. On Vigil, treat any DEGRADED pool as urgent because there is no redundancy margin left.
 - If the system will not boot, treat it as a boot drive issue and contact support with your tier and last known `zpool status` if you have it.
 
 ---
@@ -356,8 +359,8 @@ Use this when a pool drive health is **FAILED**, uncorrectable errors are presen
 | Pool nearly full | `df -h`, `zpool list` | Free space, reduce retention |
 | S.M.A.R.T. warning, recordings OK | `smartctl -H`, `zpool status` | Monitor, back up config, plan replacement |
 | S.M.A.R.T. FAILED | `smartctl --all`, `zpool status` | Replace drive, resilver pool |
-| Pool DEGRADED | `zpool status` | Replace failed HDD, allow resilver |
-| Pool FAULTED | `zpool status` | Contact support; do not experiment |
+| Pool DEGRADED | `zpool status` | [Replace failed HDD](../storage/adding-storage.md#scenario-1-replace-a-failed-or-failing-drive), allow resilver |
+| Pool state FAULTED | `zpool status` | Contact support; do not experiment |
 | CKSUM errors on a drive | `zpool status` | Failing member; check SMART, replace drive |
 | Frigate write errors, space available | `docker logs frigate` | Failing pool member; check SMART |
 | Pool drive missing | `zpool status`, `dmesg` | Reseat drive, replace if still missing |
@@ -372,7 +375,7 @@ Use this when a pool drive health is **FAILED**, uncorrectable errors are presen
 Once the immediate issue is under control:
 
 - [NVR running slow or dropping frames](performance.md), if the pool is healthy but the system feels sluggish
-- [Checking drive health with Cockpit](../storage/drive-health.md), for routine monitoring once things are stable
+- [Checking drive health](../storage/drive-health.md), for routine monitoring once things are stable
 - [Backing up Frigate config](../maintenance/backup.md), so a drive swap does not mean rebuilding from scratch
 - [Adding more storage](../storage/adding-storage.md), when replacing a pool drive or expanding capacity
 
@@ -401,7 +404,7 @@ Your system was validated before it shipped, so unexpected drive faults are some
 
 When you open a support request, include:
 
-- Your Argus tier (Vigil, Sentinel, or Warden)
+- Your Argus tier (Vigil, Sentinel, Warden, or Enclave)
 - Full output of `zpool status` and `df -h`
 - `sudo smartctl --all /dev/sdX` for any flagged pool drive (adjust device name)
 - Whether the boot M.2 is involved (NVR won't boot) or only a pool HDD

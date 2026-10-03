@@ -46,7 +46,7 @@ Some load is expected. Frigate is constantly decoding video, running object dete
 | Recordings skip or have gaps | Storage I/O or full disks | [Storage and disk I/O](#storage-and-disk-io) |
 | Problem started after adding cameras | Over tier capacity or stream settings too high | [Camera count and stream settings](#camera-count-and-stream-settings) |
 | One camera stutters, others fine | That camera's stream settings | [Check each camera individually](#check-each-camera-individually) |
-| Everything slow, not just Frigate | System-wide resource pressure | [Check overall system health](#check-overall-system-health) |
+| Whole system feels sluggish | System-wide resource pressure | [Check overall system health](#check-overall-system-health) |
 
 ---
 
@@ -165,12 +165,12 @@ You should see confirmation that your configured detector (Hailo or CPU) initial
 
 ### Argus tier expectations
 
-LAN Foundry Argus systems are sized for specific camera counts and stream loads:
+LAN Foundry Argus systems are sized for specific camera counts and stream loads (all tier specs side by side: [Argus tiers at a glance](../argus-tiers.md)):
 
 | Tier | Max cameras | Stream target | AI accelerator |
 |---|---|---|---|
 | **Vigil** | 4 | 1080p at ~2 Mbps each | Optional (Hailo-8 upgrade) |
-| **Sentinel** | 6 | 4K at ~4 Mbps each | Hailo-8 included |
+| **Sentinel / Enclave** | 6 | 4K at ~4 Mbps each | Hailo-8 included |
 | **Warden** | 12 | 4K at ~12 Mbps each | Hailo-8 included |
 
 If you've added cameras beyond your tier's maximum, or configured streams well above these bitrates, performance problems are expected rather than a sign of faulty hardware. The [camera expansion planning](https://lanfoundry.com/support) service can help if you're unsure whether your system has headroom.
@@ -273,7 +273,7 @@ Once performance is back to normal:
 
 - [Setting up an AI accelerator](../cameras/hailo-tpu.md), if you're adding an accelerator to a Vigil system
 - [Tuning motion sensitivity to reduce false alerts](../cameras/tuning-sensitivity.md), once detection is keeping up
-- [Checking drive health with Cockpit](../storage/drive-health.md), if storage I/O was the bottleneck
+- [Checking drive health](../storage/drive-health.md), if storage I/O was the bottleneck
 
 **Related troubleshooting**
 
@@ -300,7 +300,7 @@ Visit [lanfoundry.com/support](https://lanfoundry.com/support) for support optio
 
 When you open a support request, include:
 
-- Your Argus tier (Vigil, Sentinel, or Warden) and how many cameras are active
+- Your Argus tier (Vigil, Sentinel, Enclave, or Warden) and how many cameras are active
 - What you're seeing (stuttering live view, delayed detection, choppy recordings, etc.)
 - Screenshots or notes from Cockpit showing CPU, memory, and disk usage
 - Whether a Hailo detector shows as active on Frigate's System page

@@ -143,7 +143,7 @@ Quick check from Frigate logs if you suspect write failures:
 docker logs frigate --tail 50 | grep -i "space\|record\|disk"
 ```
 
-For pool health (not just capacity), use `zpool status`. See [Drive and pool errors](../troubleshooting/drive-errors.md).
+`zpool status` reports drive and pool health, beyond available capacity. See [Drive and pool errors](../troubleshooting/drive-errors.md).
 
 ---
 

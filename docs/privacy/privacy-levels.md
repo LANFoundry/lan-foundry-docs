@@ -81,6 +81,6 @@ The guides in this library work at both levels. The camera VLAN and DNS guides r
 
 ## Where to go from here
 
-- [Blocking cloud telemetry](blocking-telemetry.md) — what VLAN segmentation actually does and why cameras should be isolated
+- [Understanding network segmentation and VLANs](blocking-telemetry.md) — what VLAN segmentation actually does and why cameras should be isolated
 - [Network Setup overview](../network/index.md) — camera VLANs, DNS, Caddy hostnames, and static IPs once you have VLAN-capable hardware
 - [Adding your first camera to Frigate](../cameras/first-camera.md) — getting cameras working on your existing network today

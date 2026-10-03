@@ -116,7 +116,7 @@ Work through the sections below based on what you see in the logs.
 docker restart frigate
 ```
 
-**Caddy:** A syntax error in the Caddyfile prevents Caddy from starting. Check the file at the path you mounted when creating the container (typically `~/nvr/caddy/Caddyfile`). Fix the error, then restart:
+**Caddy:** A syntax error in the Caddyfile prevents Caddy from starting. Check the file on the host: `/opt/lanfoundry/config/caddy/Caddyfile` on Argus systems, or wherever you mounted it on your own hardware. Fix the error, then restart:
 
 ```bash
 docker restart caddy

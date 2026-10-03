@@ -53,7 +53,11 @@ theme:
 
 # Overrides the logo/site-title link in the header, which Material otherwise
 # points at this docs site's own index page. Clicking the logo should go to
-# the main site, not "documentation home" — see nav below for that.
+# the main site, not "documentation home" — see nav below for that. This is
+# also why nav has no separate "Home" entry pointing at lanfoundry.com: it
+# used to, sitting one tab away from "Docs Home" with no visual distinction
+# between "leaves the docs subsite" and "stays in it" — the logo already
+# covers that link, so the tab was a redundant, confusable duplicate.
 extra:
   homepage: https://lanfoundry.com/
 
@@ -90,25 +94,21 @@ markdown_extensions:
         - includes/abbreviations.md
 
 nav:
-  - Home: https://lanfoundry.com/
   - Docs Home: index.md
-  - The Stack: about-the-stack.md
-  - Privacy & Security:
-    - Overview: privacy/index.md
-    - Why local NVR: privacy/why-local-nvr.md
-    - How much does your router matter: privacy/privacy-levels.md
-    - What is ONVIF: privacy/what-is-onvif.md
-    - Blocking cloud telemetry: privacy/blocking-telemetry.md
+  - The Stack:
+    - The software stack: about-the-stack.md
+    - Argus tiers at a glance: argus-tiers.md
   - Network Setup:
     - Overview: network/index.md
     - Camera VLAN in OPNsense: network/vlan-opnsense.md
-    - Camera VLAN in TP-Link Switch: network/vlan-tplink.md
+    - Camera VLAN in TP-Link switch: network/vlan-tplink.md
     - DNS entries in OPNsense: network/dns-opnsense.md
     - Caddy reverse proxy: network/caddy-reverse-proxy.md
     - Static IP assignment: network/static-ip.md
-    - Camera VLAN on other Routers/Switches: network/vlan-other-routers.md
+    - Camera VLAN on other routers and switches: network/vlan-other-routers.md
     - Remote access with Tailscale: network/tailscale.md
     - Remote access with WireGuard: network/vpn-wireguard.md
+    - "Enclave: the air-gapped tier": network/enclave-tier.md
   - Camera Setup:
     - Overview: cameras/index.md
     - Adding your first camera: cameras/first-camera.md
@@ -119,15 +119,15 @@ nav:
     - Tuning motion sensitivity: cameras/tuning-sensitivity.md
   - Notifications:
     - Overview: notifications/index.md
-    - Setting up ntfy: notifications/ntfy-setup.md
+    - Setting up push notifications: notifications/ntfy-setup.md
     - ntfy on your phone: notifications/ntfy-mobile.md
     - Filtering events: notifications/filtering.md
-    - Notification schedules: notifications/schedules.md
+    - Notification quiet hours: notifications/schedules.md
   - Storage:
     - Overview: storage/index.md
     - How Frigate stores recordings: storage/frigate-storage.md
     - Retention policies: storage/retention.md
-    - Drive health with Cockpit: storage/drive-health.md
+    - Checking drive health: storage/drive-health.md
     - Adding more storage: storage/adding-storage.md
   - Maintenance:
     - Overview: maintenance/index.md
@@ -142,13 +142,31 @@ nav:
     - Not receiving notifications: troubleshooting/notifications.md
     - NVR slow or dropping frames: troubleshooting/performance.md
     - Drive and pool errors: troubleshooting/drive-errors.md
-    - Container Issues: troubleshooting/container.md
+    - Container won't start: troubleshooting/container.md
     - General Linux resources: troubleshooting/linux-resources.md
-  - Going Further:
-    - Overview: further/index.md
-    - Additional notification integrations: further/notification-integrations.md
-    - Adding Home Assistant: further/home-assistant.md
-    - Frigate + Home Assistant: further/frigate-home-assistant.md
-    - Hardware potential: further/hardware-potential.md
-    - Running your own containers safely: further/container-networking.md
-    - Community resources: further/community.md
+  # Groups two lower-traffic, non-sequential sections (background concepts
+  # and optional extras) under one tab instead of two more top-level peers —
+  # was 11 top-level tabs before this pass (including a since-removed
+  # duplicate "Home" entry, see the extra.homepage comment above), now 9.
+  # Both keep their own Overview pages and full page lists, just nested one
+  # level deeper; this only changes where they live in the tab bar, not
+  # their content or URLs. Named "More" rather than "Reference": once the
+  # Enclave tier page moved to Network Setup (it's a network-topology
+  # choice, not an extra — see that section's nav), everything left here is
+  # genuinely lighter-weight background/optional material, so a plain
+  # catch-all label is honest rather than underselling something.
+  - More:
+    - Privacy & Security:
+      - Overview: privacy/index.md
+      - Why local NVR: privacy/why-local-nvr.md
+      - How much does your router matter: privacy/privacy-levels.md
+      - What is ONVIF: privacy/what-is-onvif.md
+      - Understanding network segmentation and VLANs: privacy/blocking-telemetry.md
+    - Going Further:
+      - Overview: further/index.md
+      - Additional notification integrations: further/notification-integrations.md
+      - Adding Home Assistant: further/home-assistant.md
+      - Frigate + Home Assistant: further/frigate-home-assistant.md
+      - Hardware potential: further/hardware-potential.md
+      - Running your own containers safely: further/container-networking.md
+      - Community resources: further/community.md
