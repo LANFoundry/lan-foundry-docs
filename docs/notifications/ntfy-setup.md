@@ -95,7 +95,7 @@ Keep note of the topic — you'll enter it in the ntfy app in the next guide.
 
 Open a browser on your main LAN and go to `https://ntfy.internal`. You should see the ntfy web interface. If you see a certificate warning, click through it — this is expected on first visit and is covered in the [Caddy guide](../network/caddy-reverse-proxy.md#step-2-trust-the-certificate).
 
-If the page doesn't load, check that the ntfy container is running in Portainer and that DNS is configured. See [Can't reach a service by hostname](../troubleshooting/hostname.md) if the hostname isn't resolving.
+If the page doesn't load, check that the ntfy container is running in Arcane and that DNS is configured. See [Can't reach a service by hostname](../troubleshooting/hostname.md) if the hostname isn't resolving.
 
 You can also verify ntfy is receiving notifications from frigate-notify by subscribing to your topic in the web UI. Enter your topic name and click **Subscribe**, then walk in front of a camera. A notification with a snapshot should appear within 30 seconds.
 

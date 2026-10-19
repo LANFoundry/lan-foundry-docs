@@ -11,7 +11,7 @@ This guide covers restoring **configuration files** on a running NVR. It does no
 This guide assumes:
 
 - You have a dated backup of `config.yml` (and ideally your Caddyfile) from another folder on the NVR or from an off-NVR copy
-- You can SSH into the NVR or use Portainer
+- You can SSH into the NVR or use Arcane
 - The Frigate container exists but is misconfigured, or stops immediately after start
 
 If the container problem is not config-related (disk full, network, image update), start with [What to do when a container won't start](../troubleshooting/container.md).
@@ -119,7 +119,7 @@ If an update removed volume mounts or recreated the container with empty config:
 
 1. Confirm where the **old** config still lives. Bind mounts often remain on the host even when the container was recreated. Check the path from `docker inspect frigate`.
 2. If the host path was wiped, copy `config.yml` from your off-NVR backup into the mount path from Step 2.
-3. Recreate the container using the same volumes and network as before. See [Updating via Portainer](portainer-updates.md) and [What to do when a container won't start](../troubleshooting/container.md).
+3. Recreate the container using the same volumes and network as before. See [Updating containers](container-updates.md) and [What to do when a container won't start](../troubleshooting/container.md).
 
 Certificate data for Caddy usually survives in Docker volumes `caddy-data` and `caddy-config` unless those volumes were deleted. Restoring `config.yml` does not restore TLS certificates, and you typically do not need to.
 
@@ -131,7 +131,7 @@ Restore fixes configuration mistakes. It does **not** fix:
 
 - **Full boot drive failure** — the OS and Docker setup may need reinstallation or Argus support
 - **ZFS pool failure or corruption** — recordings may be lost independent of `config.yml`
-- **Bad container image** — roll back the image tag in Portainer or pull a previous Frigate version
+- **Bad container image** — roll back the image tag in the project's compose file in Arcane and redeploy, or pull a previous Frigate version
 
 Contact [lanfoundry.com/support](https://lanfoundry.com/support) for Argus hardware if the NVR will not boot, the pool is **FAULTED**, or containers cannot be recreated after following the guides above.
 
@@ -142,4 +142,4 @@ Contact [lanfoundry.com/support](https://lanfoundry.com/support) for Argus hardw
 - [Backing up your Frigate configuration](backup.md), to save a fresh copy after a successful restore
 - [What to do when a container won't start](../troubleshooting/container.md), if restore does not fix startup
 - [Camera feed not showing in Frigate](../troubleshooting/camera-feed.md), if config is valid but streams fail
-- [Updating via Portainer](portainer-updates.md), when you are ready to try updates again
+- [Updating containers](container-updates.md), when you are ready to try updates again

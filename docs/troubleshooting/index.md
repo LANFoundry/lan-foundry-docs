@@ -16,5 +16,5 @@ Pick the guide that matches what you see. Each page opens with context and steps
 - **[Not receiving notifications](notifications.md)** — Alerts that never arrive on your phone or in ntfy.
 - **[NVR slow or dropping frames](performance.md)** — Stuttering live view, laggy detection, or overload at tier limits.
 - **[Drive and pool errors](drive-errors.md)** — Full pool, ZFS faults, S.M.A.R.T. warnings, and recording gaps.
-- **[Container issues](container.md)** — Frigate, Caddy, Portainer, or other containers that crash or refuse to start.
+- **[Container issues](container.md)** — Frigate, Caddy, Arcane, or other containers that crash or refuse to start.
 - **[General Linux resources](linux-resources.md)** — CLI tools, logs, and where to look when no single guide fits.

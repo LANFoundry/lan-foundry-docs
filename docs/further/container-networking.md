@@ -36,7 +36,7 @@ services:
 
 No `ports:` key. Dozzle is reachable at `http://dozzle.nvr-network:8080` from Caddy, because both containers share the `nvr-network`, and from nothing else. Not your LAN, not the camera VLAN, nothing outside the Docker network. `https://dozzle.internal` works because Caddy is doing the reaching, not because Dozzle is exposed.
 
-**A note on short names versus fully-qualified names.** Docker resolves a container by its bare name (`dozzle`) when there's no ambiguity about which network to look on. In this stack, Caddy only ever joins `nvr-network`, so the bare name would work fine today, but every built-in Caddyfile entry uses the fully-qualified `container_name.network_name` form anyway. It costs nothing to write and it stops being ambiguous automatically if that ever changes, for example if a future service needs Caddy on a second network too. That's not guaranteed for a container connected to more than one network, or joined to a network after it was created (for example, using Portainer's "join network" on a container that's already running, instead of declaring the network in its original compose file), both of which are common for a third-party app you're adding on top of an existing stack. Use the fully-qualified form by default.
+**A note on short names versus fully-qualified names.** Docker resolves a container by its bare name (`dozzle`) when there's no ambiguity about which network to look on. In this stack, Caddy only ever joins `nvr-network`, so the bare name would work fine today, but every built-in Caddyfile entry uses the fully-qualified `container_name.network_name` form anyway. It costs nothing to write and it stops being ambiguous automatically if that ever changes, for example if a future service needs Caddy on a second network too. That's not guaranteed for a container connected to more than one network, or joined to a network after it was created (for example, using Arcane's "join network" on a container that's already running, instead of declaring the network in its original compose file), both of which are common for a third-party app you're adding on top of an existing stack. Use the fully-qualified form by default.
 
 ---
 
@@ -94,11 +94,11 @@ Neither service publishes a port. Neither joins `nvr-network`. They can reach ea
 
 ## Step-by-step: adding a new container
 
-1. Add the service block to your compose file, either directly in Portainer's stack editor or on disk under `/opt/lanfoundry/stacks/`.
+1. Add the service block to your compose file, either directly in Arcane's project editor or on disk under `/opt/lanfoundry/stacks/`.
 2. Decide which variant it needs. Join `nvr-network` only if it genuinely needs to reach Frigate, Caddy, or another service already on it. Otherwise, give it its own dedicated network.
 3. Skip `ports:` entirely unless something outside the Docker host, another device on your LAN, or a remote client over Tailscale, genuinely needs to reach it directly.
 4. If it needs a browser hostname, add the Caddy entry and restart the `caddy` container.
-5. Redeploy the stack from Portainer.
+5. Redeploy the project from Arcane.
 
 ---
 

@@ -1,6 +1,6 @@
 # Adding DNS entries in OPNsense for NVR services
 
-If you're setting up Caddy as a reverse proxy on your NVR, you'll reach your services by hostname — `frigate.internal`, `portainer.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal` — instead of remembering IP addresses and port numbers. Before any of that works, those hostnames need to resolve to your NVR's IP address on your network. This guide walks through adding those entries in OPNsense so every device on your LAN gets the right answer automatically, without editing a hosts file on each one.
+If you're setting up Caddy as a reverse proxy on your NVR, you'll reach your services by hostname — `frigate.internal`, `arcane.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal` — instead of remembering IP addresses and port numbers. Before any of that works, those hostnames need to resolve to your NVR's IP address on your network. This guide walks through adding those entries in OPNsense so every device on your LAN gets the right answer automatically, without editing a hosts file on each one.
 
 You may be here as the next step in building out your stack, or because you already set up Caddy and a hostname won't load in your browser. Either way, the fix is the same.
 
@@ -46,7 +46,7 @@ These hostnames match the [Caddy reverse proxy guide](caddy-reverse-proxy.md) ex
 | Service   | Hostname              | Points to                         |
 |-----------|-----------------------|-----------------------------------|
 | Frigate   | `frigate.internal`    | NVR static IP (e.g. `192.168.1.100`) |
-| Portainer | `portainer.internal`  | NVR static IP                     |
+| Arcane    | `arcane.internal`     | NVR static IP                     |
 | Cockpit   | `cockpit.internal`    | NVR static IP                     |
 | ntfy      | `ntfy.internal`       | NVR static IP                     |
 | Dozzle    | `dozzle.internal`     | NVR static IP                     |
@@ -91,13 +91,13 @@ You'll create five entries, one for each service hostname. For each entry, click
 - **IP:** `192.168.1.100`
 - **Description:** `Frigate via Caddy`
 
-**Portainer**
+**Arcane**
 
-- **Host:** `portainer`
+- **Host:** `arcane`
 - **Domain:** `internal`
 - **Type:** A (IPv4)
 - **IP:** `192.168.1.100`
-- **Description:** `Portainer via Caddy`
+- **Description:** `Arcane via Caddy`
 
 **Cockpit**
 
@@ -140,7 +140,7 @@ Before testing from another device, confirm OPNsense itself is returning the rig
 Navigate to **Services**, then **Unbound DNS**, then **Diagnostics**. Use the lookup tool to query each hostname:
 
 - `frigate.internal`
-- `portainer.internal`
+- `arcane.internal`
 - `cockpit.internal`
 - `ntfy.internal`
 - `dozzle.internal`
@@ -184,7 +184,7 @@ The server in the response should be your OPNsense LAN IP. The address returned 
 If you've already completed the [Caddy reverse proxy guide](caddy-reverse-proxy.md), open a browser and navigate to each hostname:
 
 - `https://frigate.internal`
-- `https://portainer.internal`
+- `https://arcane.internal`
 - `https://cockpit.internal`
 - `https://ntfy.internal`
 - `https://dozzle.internal`

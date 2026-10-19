@@ -26,7 +26,7 @@ Schedule OS updates during a window when brief recording gaps during reboot are 
 |---|---|---|
 | Ubuntu packages (kernel, drivers, Cockpit) | `apt` | Yes |
 | Docker Engine | `apt` (Docker package repository) | Yes, when updates appear |
-| Frigate, Caddy, Portainer images | Portainer or `docker pull` | See [Updating via Portainer](portainer-updates.md) |
+| Frigate, Caddy, Arcane images | Arcane or `docker pull` | See [Updating containers](container-updates.md) |
 
 Updating Ubuntu does **not** automatically update your Frigate container image, and vice versa.
 
@@ -143,7 +143,7 @@ sudo systemctl restart cockpit
 
 ## Where to go from here
 
-- [Updating via Portainer](portainer-updates.md), for Frigate, Caddy, and Portainer images
+- [Updating containers](container-updates.md), for Frigate, Caddy, and Arcane images
 - [Backing up your Frigate configuration](backup.md), before reboots or major changes
 - [Drive and pool errors](../troubleshooting/drive-errors.md), if the pool does not come online after reboot
 - [General Linux troubleshooting resources](../troubleshooting/linux-resources.md), for logs and system commands

@@ -4,7 +4,7 @@ You set up DNS, configured Caddy, and typed `https://frigate.internal` into your
 
 This guide walks through figuring out where the breakdown is. Reaching your NVR services by hostname involves two separate steps: your device has to resolve the hostname to an IP address, and Caddy on the NVR has to receive the request and route it to the right service. This guide helps you identify which of those is failing and what to do about it.
 
-The hostnames used throughout match the [Caddy reverse proxy guide](../network/caddy-reverse-proxy.md) and the [OPNsense DNS guide](../network/dns-opnsense.md): `frigate.internal`, `portainer.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal`.
+The hostnames used throughout match the [Caddy reverse proxy guide](../network/caddy-reverse-proxy.md) and the [OPNsense DNS guide](../network/dns-opnsense.md): `frigate.internal`, `arcane.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal`.
 
 !!! note "Not applicable to Enclave"
     This guide assumes you reach the NVR from another device on your network. [Enclave](../network/enclave-tier.md) has no network-based way to reach it by design; kiosk mode on an attached monitor is the interface for that tier.
@@ -63,7 +63,7 @@ In the OPNsense web interface, navigate to **Services**, then **Unbound DNS**, t
 | Host | Domain | IP |
 |---|---|---|
 | `frigate` | `internal` | your NVR static IP |
-| `portainer` | `internal` | your NVR static IP |
+| `arcane` | `internal` | your NVR static IP |
 | `cockpit` | `internal` | your NVR static IP |
 | `ntfy` | `internal` | your NVR static IP |
 | `dozzle` | `internal` | your NVR static IP |
@@ -151,7 +151,7 @@ Add these lines, replacing the IP with your NVR's static address:
 
 ```
 192.168.1.100  frigate.internal
-192.168.1.100  portainer.internal
+192.168.1.100  arcane.internal
 192.168.1.100  cockpit.internal
 192.168.1.100  ntfy.internal
 192.168.1.100  dozzle.internal
@@ -201,14 +201,14 @@ SSH into the NVR or connect a keyboard and monitor, then check that the containe
 docker ps
 ```
 
-You should see `caddy`, `frigate`, `portainer`, `ntfy`, and `dozzle` in the list with a status of **Up**. If Caddy isn't running, nothing will respond on port 443 regardless of DNS.
+You should see `caddy`, `frigate`, `arcane`, `ntfy`, and `dozzle` in the list with a status of **Up**. If Caddy isn't running, nothing will respond on port 443 regardless of DNS.
 
 ### Test a service directly by port
 
 Bypass Caddy temporarily to confirm the underlying service is reachable. From a device on your main LAN:
 
 - Frigate: `http://192.168.1.100:5000`
-- Portainer: `https://192.168.1.100:9443`
+- Arcane: `http://192.168.1.100:3552`
 - Cockpit: `https://192.168.1.100:9090`
 - ntfy: `http://192.168.1.100:2586`
 
@@ -245,7 +245,7 @@ docker network connect nvr-network frigate
 docker restart caddy
 ```
 
-Do the same for Portainer if you see a similar error for `portainer`.
+Do the same for Arcane if you see a similar error for `arcane`.
 
 **`connection refused` for Cockpit**
 
@@ -253,7 +253,7 @@ Caddy can't reach Cockpit on the host. The container was likely started without 
 
 **No errors, but the wrong service loads**
 
-The hostname in your browser doesn't match the Caddyfile. Confirm the Caddyfile on the NVR (`/opt/lanfoundry/config/caddy/Caddyfile` on Argus) contains `frigate.internal`, `portainer.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal` exactly. Typos here mean Caddy won't route the request correctly.
+The hostname in your browser doesn't match the Caddyfile. Confirm the Caddyfile on the NVR (`/opt/lanfoundry/config/caddy/Caddyfile` on Argus) contains `frigate.internal`, `arcane.internal`, `cockpit.internal`, `ntfy.internal`, and `dozzle.internal` exactly. Typos here mean Caddy won't route the request correctly.
 
 ### Confirm containers share a network
 
@@ -263,7 +263,7 @@ On the NVR:
 docker network inspect nvr-network
 ```
 
-The output should list `caddy`, `frigate`, `portainer`, `ntfy`, and `dozzle` among the connected containers. If any are missing:
+The output should list `caddy`, `frigate`, `arcane`, `ntfy`, and `dozzle` among the connected containers. If any are missing:
 
 ```bash
 docker network connect nvr-network <container-name>
@@ -282,7 +282,7 @@ You should see Caddy bound to both ports. If another process is using them, Cadd
 
 ## Certificate warnings
 
-If the page loads but your browser shows a security warning before displaying Frigate, Portainer, or Cockpit, that's expected, not a failure.
+If the page loads but your browser shows a security warning before displaying Frigate, Arcane, or Cockpit, that's expected, not a failure.
 
 Caddy uses its own internal certificate authority for `.internal` hostnames. Your browser doesn't trust it by default. Click through the warning once per hostname per browser:
 

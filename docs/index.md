@@ -29,7 +29,7 @@ This library is designed to stand on its own as well as support our product line
 | Phase | What you will find |
 |---|---|
 | **Now** | General guides for any local Frigate setup: privacy, network, cameras, storage, maintenance, troubleshooting. No LAN Foundry hardware required. Some pages are **living documents** (for example the [tested camera list](cameras/tested-cameras.md)). |
-| **At Argus launch** | Product **Getting started** guides: unboxing, first boot, Cockpit and Portainer orientation, Tailscale on the Argus workflow. Until then, Argus owners can follow the general guides; they match how we configure systems before they leave the shop. |
+| **At Argus launch** | Product **Getting started** guides: unboxing, first boot, Cockpit and Arcane orientation, Tailscale on the Argus workflow. Until then, Argus owners can follow the general guides; they match how we configure systems before they leave the shop. |
 | **After launch** | Updates as the stack changes, troubleshooting expanded from real support patterns, and new sections when we ship additional locally hosted products beyond our Argus line of NVRs. |
 
 Search and each section **Overview** reflect what is published today.

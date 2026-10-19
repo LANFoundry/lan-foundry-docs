@@ -10,7 +10,7 @@ This guide covers what to back up, when to do it, and how to keep copies somewhe
 
 This guide assumes:
 
-- You can SSH into the NVR or open Portainer at `https://portainer.internal`
+- You can SSH into the NVR or open Arcane at `https://arcane.internal`
 - Frigate is already running and configured
 
 Backups described here protect **configuration**, not your entire recording archive. Footage on the ZFS pool is a separate concern. See [Drive and pool errors](../troubleshooting/drive-errors.md) for storage health and [How Frigate stores recordings](../storage/frigate-storage.md) for how footage is organized on disk.
@@ -22,7 +22,9 @@ Backups described here protect **configuration**, not your entire recording arch
 | Item | Why it matters |
 |---|---|
 | **`config.yml`** | Camera streams, detection, zones, notifications, retention |
-| **Caddyfile** | Hostname routing for Frigate, Portainer, and Cockpit |
+| **Caddyfile** | Hostname routing for Frigate, Arcane, and Cockpit |
+| **Compose projects** | Every service's definition, in `/opt/lanfoundry/stacks/` |
+| **Arcane's `ENCRYPTION_KEY`** | Set in Arcane's compose file; without it, a restored `arcane-data` volume can't decrypt the secrets Arcane stored |
 | **Optional: environment files** | Only if you use a `.env` file or custom variables with your containers |
 
 You do **not** need to back up Docker images. They can be pulled again from the registry. You also do not need to copy the full recording pool for a routine config backup.
@@ -54,7 +56,7 @@ Look for the mount mapped to `/etc/caddy/Caddyfile`.
 Create a fresh backup:
 
 - **Before editing `config.yml`** (adding cameras, zones, or notification changes)
-- **Before updating container images** via [Portainer](portainer-updates.md)
+- **Before updating container images** via [Arcane](container-updates.md)
 - **Before Ubuntu package updates** that may require a reboot ([Updating Ubuntu Server](ubuntu-updates.md))
 - **After a working configuration** you do not want to recreate
 
@@ -89,13 +91,21 @@ if [ -n "$CADDYFILE" ] && [ -f "$CADDYFILE" ]; then
 fi
 ```
 
+### Copy compose projects
+
+```bash
+sudo cp -r /opt/lanfoundry/stacks "$BACKUP_DIR/stacks"
+```
+
+This includes Arcane's own compose file, and with it the `ENCRYPTION_KEY`.
+
 ### Verify the backup
 
 ```bash
 ls -la "$BACKUP_DIR"
 ```
 
-You should see `config.yml` and optionally `Caddyfile`.
+You should see `config.yml`, the `stacks` folder, and optionally `Caddyfile`.
 
 ---
 
@@ -119,15 +129,17 @@ Store backups on a machine you control, not on a cloud sync folder unless you ar
 
 ---
 
-## Back up from Portainer
+## Back up from Arcane
 
 If you prefer the web UI:
 
-1. Browse to `https://portainer.internal`.
-2. Open the **frigate** container and note the host path mounted to `/config` under **Volumes**.
+1. Browse to `https://arcane.internal`.
+2. Open the **frigate** container and note the host path mounted to `/config` in its mounts.
 3. Use SSH or Cockpit's file tools to copy `config.yml` from that path into a dated folder, or use SCP as above.
 
-Portainer does not replace off-NVR copies. It helps you find paths, not archive files to another machine.
+Under **Projects**, each project's compose file is visible in the editor, which is a quick way to confirm what's in `/opt/lanfoundry/stacks/` before you copy it.
+
+Arcane does not replace off-NVR copies. It helps you find paths, not archive files to another machine.
 
 ---
 
@@ -143,7 +155,7 @@ Keep three to five recent dated backups and delete older ones if disk space on y
 
 ## Where to go from here
 
-- [Updating via Portainer](portainer-updates.md), after you have a current backup
+- [Updating containers](container-updates.md), after you have a current backup
 - [Restoring from a backup](restore.md), when you need to put an old `config.yml` back
 - [What to do when a container won't start](../troubleshooting/container.md), if Frigate fails after a config change
 - [Drive and pool errors](../troubleshooting/drive-errors.md), if the problem is storage rather than configuration

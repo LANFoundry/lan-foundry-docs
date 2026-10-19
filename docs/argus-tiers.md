@@ -52,6 +52,6 @@ Almost every guide on this site applies to all four tiers. The exceptions need e
 - [Remote access with Tailscale](network/tailscale.md) and [Remote access with WireGuard](network/vpn-wireguard.md)
 - [Setting up push notifications](notifications/ntfy-setup.md) and [Not receiving notifications](troubleshooting/notifications.md)
 - [Can't reach service by hostname](troubleshooting/hostname.md)
-- [Updating via Portainer](maintenance/portainer-updates.md) and [Updating Ubuntu Server](maintenance/ubuntu-updates.md), which pull updates from the internet. Enclave ships with current software; updating it afterwards is up to you
+- [Updating containers](maintenance/container-updates.md) and [Updating Ubuntu Server](maintenance/ubuntu-updates.md), which pull updates from the internet. Enclave ships with current software; updating it afterwards is up to you
 
 On Enclave, commands that other guides run over SSH run from a terminal on the attached monitor instead. See [Kiosk mode: how you actually use it](network/enclave-tier.md#kiosk-mode-how-you-actually-use-it).

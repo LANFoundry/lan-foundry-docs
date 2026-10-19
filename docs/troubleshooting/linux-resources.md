@@ -24,7 +24,7 @@ Many problems that feel like "Linux issues" are actually DNS, Docker, storage, o
 | Symptom | Start here |
 |---|---|
 | Hostname won't load in a browser | [Can't reach a service by hostname](hostname.md) |
-| Frigate, Caddy, or Portainer won't start | [What to do when a container won't start](container.md) |
+| Frigate, Caddy, or Arcane won't start | [What to do when a container won't start](container.md) |
 | Camera tile blank or stream failed | [Camera feed not showing in Frigate](camera-feed.md) |
 | NVR slow, stuttering, or dropping frames | [NVR running slow or dropping frames](performance.md) |
 | Drive warnings, pool degraded, recording gaps | [Drive and pool errors](drive-errors.md) |
@@ -80,7 +80,7 @@ Press `Ctrl+C` to stop a command that is following output live.
 
 ## Docker and containers
 
-Your NVR services (Frigate, Caddy, Portainer) run as Docker containers. The host runs Ubuntu; the applications run inside containers.
+Your NVR services (Frigate, Caddy, Arcane) run as Docker containers. The host runs Ubuntu; the applications run inside containers.
 
 | Task | Command |
 |---|---|

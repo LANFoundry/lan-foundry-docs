@@ -1,8 +1,8 @@
 # What to do when a container won't start
 
-One of your NVR services stopped working. Frigate won't load, Portainer shows a container in a restart loop, or Caddy exited after a config change. This guide walks through finding out why a container failed and getting it running again.
+One of your NVR services stopped working. Frigate won't load, Arcane shows a container in a restart loop, or Caddy exited after a config change. This guide walks through finding out why a container failed and getting it running again.
 
-Your NVR stack runs most of its services as Docker containers: Frigate, Portainer, and Caddy. Cockpit is the exception since it runs directly on the host. This guide focuses on the containers. If Cockpit is the service that's down, see the [Cockpit isn't running](#cockpit-isnt-running) section at the bottom.
+Your NVR stack runs most of its services as Docker containers: Frigate, Arcane, and Caddy. Cockpit is the exception since it runs directly on the host. This guide focuses on the containers. If Cockpit is the service that's down, see the [Cockpit isn't running](#cockpit-isnt-running) section at the bottom.
 
 ---
 
@@ -12,7 +12,7 @@ This guide assumes:
 
 - You can reach the NVR itself, either by SSH, a connected keyboard and monitor, or Cockpit if it's still running
 - Docker is installed and has worked previously on this system
-- You know which container is having trouble (`frigate`, `portainer`, or `caddy`)
+- You know which container is having trouble (`frigate`, `arcane`, or `caddy`)
 
 If you can't reach the NVR at all, that's a different problem. Confirm the machine is powered on and responding to ping at its static IP before troubleshooting containers.
 
@@ -26,9 +26,9 @@ If the service loads in your browser but behaves incorrectly, that may be a conf
 |---|---|---|
 | `frigate` | NVR recording and object detection | No camera feeds, Frigate UI won't load |
 | `caddy` | Reverse proxy for clean hostnames | All hostname URLs fail; direct port access may still work |
-| `portainer` | Web UI for managing containers | Can't open Portainer; use SSH and `docker` commands instead |
+| `arcane` | Web UI for managing containers | Can't open Arcane; use SSH and `docker` commands instead |
 
-All three should be connected to the `nvr-network` Docker network. Caddy depends on being able to reach Frigate and Portainer by container name on that network. If you're also having hostname or browser issues, see [Can't reach a service by hostname](hostname.md) after the container is running again.
+All three should be connected to the `nvr-network` Docker network. Caddy depends on being able to reach Frigate and Arcane by container name on that network. If you're also having hostname or browser issues, see [Can't reach a service by hostname](hostname.md) after the container is running again.
 
 ---
 
@@ -59,9 +59,9 @@ docker ps
 
 If a container you expect to see is missing from the list entirely, it may have been removed. You'll need to recreate it using the setup commands from the [Caddy guide](../network/caddy-reverse-proxy.md) or your Frigate installation steps.
 
-### From Portainer
+### From Arcane
 
-If Portainer itself is running, browse to `https://portainer.internal` (or the NVR IP on port 9000). Go to **Containers**. Each container shows a status icon:
+If Arcane itself is running, browse to `https://arcane.internal` (or `http://` and the NVR IP on port 3552). Go to **Containers**. Each container shows a status icon:
 
 - Green: running
 - Red or orange: stopped or unhealthy
@@ -96,9 +96,9 @@ docker logs frigate -f
 
 Press `Ctrl+C` to stop following.
 
-### From Portainer
+### From Arcane
 
-Click the container name, then open the **Logs** tab. Portainer shows the same output as `docker logs`. Use the tail count or scroll to the bottom to find the most recent error.
+Click the container name, then open the **Logs** tab. Arcane shows the same output as `docker logs`, streamed live. Scroll to the bottom to find the most recent error. Multiline messages such as stack traces are grouped together, which makes a crash easier to read than in the raw terminal output.
 
 ---
 
@@ -128,9 +128,9 @@ Before editing configuration files, it's worth saving a copy of the current vers
 
 ### Container not on `nvr-network`
 
-**What you'll see in Caddy logs:** `dial tcp: lookup frigate: no such host` or a similar message for `portainer`.
+**What you'll see in Caddy logs:** `dial tcp: lookup frigate: no such host` or a similar message for `arcane`.
 
-Caddy reaches Frigate and Portainer by container name on the shared Docker network. If a container isn't connected to `nvr-network`, Caddy can't find it even if both containers are running.
+Caddy reaches Frigate and Arcane by container name on the shared Docker network. If a container isn't connected to `nvr-network`, Caddy can't find it even if both containers are running.
 
 Check which containers are on the network:
 
@@ -145,13 +145,13 @@ docker network connect nvr-network frigate
 docker restart caddy
 ```
 
-Replace `frigate` with `portainer` if that's the missing container.
+Replace `frigate` with `arcane` if that's the missing container.
 
 ### Port already in use
 
 **What you'll see:** `bind: address already in use` or `port is already allocated`.
 
-Two containers can't listen on the same port. Caddy uses ports 80 and 443. Frigate uses 5000. Portainer uses 9000.
+Two containers can't listen on the same port. Caddy uses ports 80 and 443. Frigate uses 5000. Arcane uses 3552.
 
 Check what's using a port (example for 443):
 
@@ -212,7 +212,7 @@ docker stop frigate
 docker run ... ghcr.io/blakeblackshear/frigate:0.14.1
 ```
 
-Use the exact `docker run` command or Portainer stack definition you originally deployed with, changing only the image tag. If you're not sure what changed, restoring from a configuration backup is safer than guessing.
+Use the exact `docker run` command or Arcane project compose file you originally deployed with, changing only the image tag. If you're not sure what changed, restoring from a configuration backup is safer than guessing.
 
 ---
 
@@ -226,7 +226,7 @@ Once you've identified and fixed the underlying issue, restart the container.
 docker restart frigate
 ```
 
-Replace `frigate` with `caddy` or `portainer` as needed.
+Replace `frigate` with `caddy` or `arcane` as needed.
 
 To stop and start separately:
 
@@ -235,7 +235,7 @@ docker stop frigate
 docker start frigate
 ```
 
-### From Portainer
+### From Arcane
 
 Click the container name, then click **Restart**. If the container is stopped, click **Start** instead.
 
@@ -253,10 +253,10 @@ If the status shows **Restarting** or **Exited** again, go back to the logs. The
 
 If more than one container failed at the same time, bring them up in this order:
 
-1. **Frigate** and **Portainer** first
+1. **Frigate** and **Arcane** first
 2. **Caddy** last
 
-Caddy depends on Frigate and Portainer being reachable on `nvr-network`. Starting Caddy before they're up produces temporary errors in the Caddy logs even if nothing is permanently wrong.
+Caddy depends on Frigate and Arcane being reachable on `nvr-network`. Starting Caddy before they're up produces temporary errors in the Caddy logs even if nothing is permanently wrong.
 
 ---
 
@@ -279,7 +279,7 @@ docker rm caddy
 
 Then run the full `docker run` command from the [Caddy guide](../network/caddy-reverse-proxy.md). Do not run `docker volume rm` unless you intentionally want to wipe stored data.
 
-In Portainer, the equivalent is **Recreate** on a container. Read the confirmation dialog carefully. Portainer usually preserves volumes, but verify the options before confirming.
+In Arcane, how you recreate depends on what changed. If you changed port mappings, mounts, or other settings, edit them in the project's compose file under **Projects**, **Save**, then click **Redeploy**. If the definition is fine and you only need a fresh container, use **Redeploy** on the container itself, which recreates it with the same name, mounts, and networks. Avoid **Destroy** on a project unless you mean to remove it: it asks whether to delete volumes, and choosing yes wipes stored data.
 
 ---
 
@@ -361,12 +361,12 @@ Once your containers are running again, confirm your services are reachable:
 **Maintenance guides**
 
 - [Backing up your Frigate configuration](../maintenance/backup.md)
-- [Updating via Portainer](../maintenance/portainer-updates.md)
+- [Updating containers](../maintenance/container-updates.md)
 - [General Linux troubleshooting resources](linux-resources.md)
 
 **If you're still stuck**
 
-Copy the last thirty to fifty lines of the container log and search for the specific error message. The Frigate, Caddy, and Portainer project documentation and community forums are good next steps for errors that aren't covered here.
+Copy the last thirty to fifty lines of the container log and search for the specific error message. The Frigate, Caddy, and Arcane project documentation and community forums are good next steps for errors that aren't covered here.
 
 ---
 
@@ -384,7 +384,7 @@ Your system was validated before it shipped, so a container that won't start is 
 
 When you open a support request, include:
 
-- The container name (`frigate`, `caddy`, or `portainer`)
+- The container name (`frigate`, `caddy`, or `arcane`)
 - What you were doing when it failed
 - The last thirty to fifty lines from the container log
 - Any configuration file you changed recently, if applicable

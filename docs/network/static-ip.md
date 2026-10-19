@@ -162,4 +162,4 @@ With a static IP assigned, your NVR has a stable address that other parts of the
 
 - [Camera VLAN in OPNsense](vlan-opnsense.md), whose firewall rules let cameras reach the NVR at this address
 - [DNS entries in OPNsense](dns-opnsense.md), which point hostnames like `frigate.internal` at this address
-- [Caddy reverse proxy](caddy-reverse-proxy.md), to reach Frigate, Cockpit, and Portainer by hostname
+- [Caddy reverse proxy](caddy-reverse-proxy.md), to reach Frigate, Cockpit, and Arcane by hostname

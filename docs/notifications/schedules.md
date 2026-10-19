@@ -102,7 +102,7 @@ persistence_location /mosquitto/data/
 
 `allow_anonymous true` is only reasonable because of how the service below publishes its port: bound to `127.0.0.1`, so nothing else on your LAN can reach the broker. Frigate reaches it over the shared Docker network, and the cron job below runs on the NVR itself. Without that, anyone on your network could turn detection off.
 
-Then add the service to your Portainer stack:
+Then add the service to your Arcane project's compose file:
 
 ```yaml
   mosquitto:

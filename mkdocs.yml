@@ -132,9 +132,10 @@ nav:
   - Maintenance:
     - Overview: maintenance/index.md
     - Backing up Frigate config: maintenance/backup.md
-    - Updating via Portainer: maintenance/portainer-updates.md
+    - Updating containers: maintenance/container-updates.md
     - Updating Ubuntu Server: maintenance/ubuntu-updates.md
     - Restoring from backup: maintenance/restore.md
+    - Moving from Portainer to Arcane: maintenance/portainer-to-arcane.md
   - Troubleshooting:
     - Overview: troubleshooting/index.md
     - Camera feed not showing: troubleshooting/camera-feed.md

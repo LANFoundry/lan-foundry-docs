@@ -18,7 +18,7 @@ Each guide stands on its own, so open the one for the part you're working on.
 - **[Camera VLAN in OPNsense](vlan-opnsense.md)** — Create the camera VLAN, DHCP, and firewall rules on OPNsense.
 - **[Camera VLAN in TP-Link switch](vlan-tplink.md)** — Assign VLAN tags on Argus TP-Link Easy Smart switches.
 - **[DNS entries in OPNsense](dns-opnsense.md)** — Resolve names like `frigate.internal` to the NVR on your LAN.
-- **[Caddy reverse proxy](caddy-reverse-proxy.md)** — Reach Frigate, Portainer, and Cockpit by hostname on ports 80 and 443.
+- **[Caddy reverse proxy](caddy-reverse-proxy.md)** — Reach Frigate, Arcane, and Cockpit by hostname on ports 80 and 443.
 - **[Camera VLAN on other routers and switches](vlan-other-routers.md)** — VLAN setup when you are not using OPNsense or TP-Link.
 - **[Remote access with Tailscale](tailscale.md)** — Reach the NVR securely from outside your home without opening ports.
 - **[Remote access with WireGuard](vpn-wireguard.md)** — A router-hosted alternative to Tailscale with no third-party dependency at all.

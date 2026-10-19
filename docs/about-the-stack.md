@@ -8,7 +8,7 @@ Argus runs on a set of open-source tools that were chosen for specific reasons: 
 
 All of the Argus services run as Docker containers on the NVR host. This is worth explaining because it's not obvious why you'd run a camera system this way rather than installing software directly on the machine.
 
-**Isolation.** Each service lives in its own container. A Frigate update can't break ntfy. A misconfigured Caddy can't crash Portainer. When something goes wrong, the blast radius is contained.
+**Isolation.** Each service lives in its own container. A Frigate update can't break ntfy. A misconfigured Caddy can't crash Arcane. When something goes wrong, the blast radius is contained.
 
 **Clean updates.** Updating a service means pulling a new container image and restarting one container. The host OS and every other service keep running. Rolling back is equally simple: point the container at an older image tag.
 
@@ -16,7 +16,7 @@ All of the Argus services run as Docker containers on the NVR host. This is wort
 
 **Separation of data from software.** Configuration lives in folders on the host under `/opt/lanfoundry/config/`, and recorded footage lives on the recording pool, both mounted into the containers rather than stored inside them. When you update Frigate, your recordings and config stay untouched because they're not inside the container.
 
-The main tradeoff is a layer of abstraction to learn. When something goes wrong, you're checking container logs and Docker networks rather than system logs directly. That's why Portainer and Dozzle are in the stack; they make that layer navigable without living in the terminal.
+The main tradeoff is a layer of abstraction to learn. When something goes wrong, you're checking container logs and Docker networks rather than system logs directly. That's why Arcane and Dozzle are in the stack; they make that layer navigable without living in the terminal.
 
 ---
 
@@ -75,7 +75,7 @@ This is roughly what the Frigate service looks like in our Docker Compose stack.
 
 Docker is the runtime that runs all other services as isolated containers.
 
-**Why Docker:** It's the most widely understood container platform with the largest ecosystem of pre-built images. Every service in the Argus stack ships an official Docker image. Portainer, the container management UI we include, is built around Docker. The community resources, troubleshooting forums, and documentation for Frigate, ntfy, and Caddy all assume Docker.
+**Why Docker:** It's the most widely understood container platform with the largest ecosystem of pre-built images. Every service in the Argus stack ships an official Docker image. Arcane, the container management UI we include, is built around Docker. The community resources, troubleshooting forums, and documentation for Frigate, ntfy, and Caddy all assume Docker.
 
 **Alternatives:**
 
@@ -133,13 +133,9 @@ And the Caddyfile it mounts:
       reverse_proxy frigate.nvr-network:5000
     }
 
-    portainer.internal {
+    arcane.internal {
       tls internal
-      reverse_proxy https://portainer.nvr-network:9443 {
-        transport http {
-          tls_insecure_skip_verify
-        }
-      }
+      reverse_proxy arcane.nvr-network:3552
     }
 
     cockpit.internal {
@@ -290,30 +286,38 @@ Other providers (Discord, Gotify, Pushover, Telegram, SMTP, and more) can be ena
 
 ---
 
-### Portainer — Container Management
+### Arcane — Container Management
 
-Portainer is a web UI for managing Docker. It shows running containers, lets you start and stop services, browse volume contents, view logs, and manage Docker Compose stacks, all from a browser rather than the command line.
+Arcane is a web UI for managing Docker. It shows running containers, lets you start and stop services, view logs, check for image updates, and manage Docker Compose projects, all from a browser rather than the command line.
 
-**Why Portainer:** It makes the Docker layer navigable for people who aren't comfortable with the CLI. Being able to restart a container, browse a config volume, or check container status in a browser without SSH access significantly lowers the barrier for day-to-day management. Most service configuration files live on the host under `/opt/lanfoundry/config/` and are mounted read-only into their containers, so you edit them on the host over SSH, then restart the container from Portainer or the command line.
+**Why Arcane:** It makes the Docker layer navigable for people who aren't comfortable with the CLI. Being able to restart a container, check container status, or update an image in a browser without SSH access significantly lowers the barrier for day-to-day management. Arcane is built around Compose: each project is a folder under `/opt/lanfoundry/stacks/` holding a compose file, so what you see in the browser and what's on disk are the same thing, and either one can be edited. It's fully open source, with no paid tier holding back features. Most service configuration files live on the host under `/opt/lanfoundry/config/` and are mounted read-only into their containers, so you edit them on the host over SSH, then restart the container from Arcane or the command line.
 
-Portainer is bootstrapped first, before the rest of the stack, so it can then deploy everything else as a managed stack. This is also where the shared `nvr-network` every other service's Compose block references gets defined:
+Arcane is bootstrapped first, before the rest of the stack, so it can then deploy everything else as managed projects. This is also where the shared `nvr-network` every other service's Compose block references gets defined:
 
-??? note "Portainer's Docker Compose service"
+??? note "Arcane's Docker Compose service"
     ```yaml
     services:
-      portainer:
-        container_name: portainer
-        image: portainer/portainer-ce:lts
-        restart: always
+      arcane:
+        container_name: arcane
+        image: ghcr.io/getarcaneapp/manager:latest
+        restart: unless-stopped
         networks:
           - nvr-network
         ports:
-          - "9443:9443"
-          - "8000:8000"
-        command: --no-setup-token
+          - "3552:3552"
+        environment:
+          - APP_URL=https://arcane.internal
+          - PUID=1000
+          - PGID=1000
+          - ENCRYPTION_KEY=<generate with: openssl rand -hex 32>
+          - PROJECTS_DIRECTORY=/opt/lanfoundry/stacks
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
-          - portainer_data:/data
+          - arcane-data:/app/data
+          - /opt/lanfoundry/stacks:/opt/lanfoundry/stacks
+
+    volumes:
+      arcane-data:
 
     networks:
       nvr-network:
@@ -321,10 +325,13 @@ Portainer is bootstrapped first, before the rest of the stack, so it can then de
         external: true
     ```
 
+The projects folder is mounted at the same path inside the container as on the host, so relative paths in compose files resolve the same way for Arcane and for Docker. `ENCRYPTION_KEY` protects the secrets Arcane stores in its database; keep a copy of it with your backups.
+
 **Alternatives:**
 
 | Option | Trade-off |
 |---|---|
+| **Portainer** | Broader feature set and the longest track record, but its free Community Edition is being discontinued |
 | **Dockge** | Focused on Compose stacks, modern UI, lighter weight, less full-featured |
 | **Yacht** | Simple, minimal, less active development |
 | **Lazydocker** | Terminal UI, fast, no web access, requires CLI comfort |
@@ -379,7 +386,7 @@ Notice there's no `ports:` line. Dozzle is only reachable through Caddy, by cont
 
 | Option | Trade-off |
 |---|---|
-| **Portainer's log view** | Already in the stack, slightly less ergonomic for live tailing |
+| **Arcane's log view** | Already in the stack, slightly less ergonomic for live tailing |
 | **`docker logs` CLI** | No extra container, requires SSH access |
 | **Grafana Loki** | Full log aggregation and search, significant setup and storage overhead |
 
@@ -462,7 +469,7 @@ The stack is not tightly coupled. The services communicate over a shared Docker 
 - **ntfy** needs `base-url` set if you want snapshot attachments
 - **Caddy** needs DNS entries to exist before hostnames resolve
 
-Everything else is independent. You can run the stack without Cockpit, without Dozzle, or without Portainer if you prefer CLI management. You can replace ntfy with Gotify by changing the provider block in frigate-notify's config. You can skip frigate-notify entirely and use Frigate's built-in notification support.
+Everything else is independent. You can run the stack without Cockpit, without Dozzle, or without Arcane if you prefer CLI management. You can replace ntfy with Gotify by changing the provider block in frigate-notify's config. You can skip frigate-notify entirely and use Frigate's built-in notification support.
 
 The guides on this site describe the default Argus configuration. Where an alternative is straightforward to substitute, the relevant guide notes it.
 

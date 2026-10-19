@@ -1,6 +1,6 @@
 # Caddy reverse proxy
 
-By default, reaching Frigate, Portainer, Cockpit, ntfy, and Dozzle requires knowing the NVR's IP address and the specific port each service runs on — something like `192.168.1.100:5000` for Frigate or `192.168.1.100:9090` for Cockpit. Caddy sits in front of all those services and lets you reach them by clean hostnames on standard HTTPS, like `frigate.internal` or `cockpit.internal`.
+By default, reaching Frigate, Arcane, Cockpit, ntfy, and Dozzle requires knowing the NVR's IP address and the specific port each service runs on — something like `192.168.1.100:5000` for Frigate or `192.168.1.100:9090` for Cockpit. Caddy sits in front of all those services and lets you reach them by clean hostnames on standard HTTPS, like `frigate.internal` or `cockpit.internal`.
 
 On Argus systems, Caddy comes pre-configured. This guide explains how it works, how to trust the certificate on your devices, and how to verify each service is reachable.
 
@@ -19,14 +19,14 @@ This guide assumes:
 
 ## How it works
 
-Caddy runs as a container on the same Docker network as Frigate, Portainer, ntfy, and Dozzle. When a request comes in for `frigate.internal`, Caddy receives it and forwards it to the right container, addressed as `container.nvr-network` rather than just the bare container name. That fully-qualified form is what the config below actually uses; see [Running your own containers safely](../further/container-networking.md) for why. Frigate, ntfy, and Dozzle serve plain HTTP on the backend. Portainer and Cockpit already serve HTTPS with their own self-signed certificates, so Caddy proxies to them over HTTPS and skips backend certificate verification.
+Caddy runs as a container on the same Docker network as Frigate, Arcane, ntfy, and Dozzle. When a request comes in for `frigate.internal`, Caddy receives it and forwards it to the right container, addressed as `container.nvr-network` rather than just the bare container name. That fully-qualified form is what the config below actually uses; see [Running your own containers safely](../further/container-networking.md) for why. Frigate, ntfy, and Dozzle serve plain HTTP on the backend. Arcane and Cockpit already serve HTTPS with their own self-signed certificates, so Caddy proxies to them over HTTPS and skips backend certificate verification.
 
 Cockpit is the exception to the container pattern — it runs directly on the host rather than in Docker. Caddy reaches it through `host.docker.internal`, Docker's built-in address for reaching the host machine from inside a container.
 
 ```
 Your device
     frigate.internal   → Caddy → frigate.nvr-network:5000            (HTTP)
-    portainer.internal → Caddy → portainer.nvr-network:9443          (HTTPS, skip verify)
+    arcane.internal    → Caddy → arcane.nvr-network:3552             (HTTP)
     cockpit.internal   → Caddy → host.docker.internal:9090           (HTTPS, skip verify)
     ntfy.internal      → Caddy → ntfy.nvr-network:80                 (HTTP)
     dozzle.internal    → Caddy → dozzle.nvr-network:8080             (HTTP)
@@ -48,13 +48,9 @@ frigate.internal {
   reverse_proxy frigate.nvr-network:5000
 }
 
-portainer.internal {
+arcane.internal {
   tls internal
-  reverse_proxy https://portainer.nvr-network:9443 {
-    transport http {
-      tls_insecure_skip_verify
-    }
-  }
+  reverse_proxy arcane.nvr-network:3552
 }
 
 cockpit.internal {
@@ -81,7 +77,7 @@ A few things worth understanding:
 
 - **`local_certs`** in the global block tells Caddy to act as its own certificate authority and issue certificates internally rather than using Let's Encrypt. This is correct for a local network with no public domain.
 - **`tls internal`** on each site tells Caddy to issue a locally trusted certificate for that hostname. Your browser won't automatically trust it until you accept it once or install Caddy's root certificate (see [Step 2](#step-2-trust-the-certificate)).
-- **`tls_insecure_skip_verify`** on the Portainer and Cockpit blocks tells Caddy to accept the self-signed certificate those services use on their backend. This is safe on a local network where you control both ends of the connection.
+- **`tls_insecure_skip_verify`** on the Cockpit block tells Caddy to accept the self-signed certificate Cockpit uses on its backend. This is safe on a local network where you control both ends of the connection.
 
 ---
 
@@ -128,7 +124,7 @@ If you want to eliminate the warning entirely on your personal devices, you can 
 Open a browser on a device on your main LAN and navigate to each hostname:
 
 - `https://frigate.internal` — Frigate live view and event timeline
-- `https://portainer.internal` — Portainer container management
+- `https://arcane.internal` — Arcane container management
 - `https://cockpit.internal` — Cockpit system overview
 - `https://ntfy.internal` — ntfy notification web interface
 - `https://dozzle.internal` — Dozzle container log viewer
@@ -150,7 +146,7 @@ Common errors and what they mean:
 | Error | Cause | Fix |
 |---|---|---|
 | `dial tcp: lookup frigate: no such host` | Container not on `nvr-network` | `docker network connect nvr-network frigate` |
-| `connection refused` on Cockpit or Portainer | Backend not running or wrong port | Confirm the service is up and the Caddyfile backend address matches |
+| `connection refused` on Cockpit or Arcane | Backend not running or wrong port | Confirm the service is up and the Caddyfile backend address matches |
 | Cockpit loads but disconnects after login | WebSocket origin rejected | Complete Step 1 (cockpit.conf) and restart Cockpit |
 | Browser can't reach the hostname at all | DNS not resolving | Check OPNsense host overrides in [DNS entries in OPNsense](dns-opnsense.md) |
 | Hostname works on one device but not another | Device using a different DNS server | See [Can't reach a service by hostname](../troubleshooting/hostname.md#windows-dns-troubleshooting) |
@@ -173,7 +169,7 @@ Connect your existing containers to the network:
 
 ```bash
 docker network connect nvr-network frigate
-docker network connect nvr-network portainer
+docker network connect nvr-network arcane
 docker network connect nvr-network ntfy
 docker network connect nvr-network dozzle
 ```
@@ -213,7 +209,7 @@ The `--add-host host.docker.internal:host-gateway` flag is what allows Caddy to 
 
 ## mDNS fallback — accessing services without a DNS server
 
-If you can't configure DNS entries on your router, mDNS is an alternative. Avahi advertises your NVR's machine hostname on the local network — by default something like `nvr.local` — without any central DNS server. The limitation is that individual service hostnames (`frigate.internal`, `portainer.internal`, etc.) can't be advertised this way, so you have two options.
+If you can't configure DNS entries on your router, mDNS is an alternative. Avahi advertises your NVR's machine hostname on the local network — by default something like `nvr.local` — without any central DNS server. The limitation is that individual service hostnames (`frigate.internal`, `arcane.internal`, etc.) can't be advertised this way, so you have two options.
 
 !!! note "Windows users"
     mDNS is unreliable on Windows-heavy networks. If you have OPNsense or any router that supports local DNS entries, use that instead. See [DNS entries in OPNsense](dns-opnsense.md).
@@ -235,12 +231,8 @@ nvr.local {
   handle /frigate* {
     reverse_proxy frigate.nvr-network:5000
   }
-  handle /portainer* {
-    reverse_proxy https://portainer.nvr-network:9443 {
-      transport http {
-        tls_insecure_skip_verify
-      }
-    }
+  handle /arcane* {
+    reverse_proxy arcane.nvr-network:3552
   }
   handle /cockpit* {
     reverse_proxy https://host.docker.internal:9090 {
@@ -258,7 +250,7 @@ nvr.local {
 }
 ```
 
-Services are then at `https://nvr.local/frigate`, `https://nvr.local/portainer`, and so on.
+Services are then at `https://nvr.local/frigate`, `https://nvr.local/arcane`, and so on.
 
 !!! note
     Subpath routing may require additional configuration for some services. Frigate in particular can behave unexpectedly when served from a non-root path. Test thoroughly before relying on this approach.
@@ -269,7 +261,7 @@ On each device that needs to access the NVR, add entries to the hosts file point
 
 ```
 192.168.1.100  frigate.internal
-192.168.1.100  portainer.internal
+192.168.1.100  arcane.internal
 192.168.1.100  cockpit.internal
 192.168.1.100  ntfy.internal
 192.168.1.100  dozzle.internal
