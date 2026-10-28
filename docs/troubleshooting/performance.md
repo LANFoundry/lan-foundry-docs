@@ -153,12 +153,20 @@ Object detection is the most CPU-intensive part of Frigate when no hardware acce
 
 ### Confirm your detector is active
 
-In the Frigate web interface, open the **System** page. Look for detector statistics showing inference speed and whether a Hailo accelerator is listed.
+In the Frigate web interface, open **Settings > System > Detectors and model** and confirm which detector is listed (Hailo-8/Hailo-8L or CPU).
 
-From the command line, check Frigate logs for detector startup messages:
+The web interface doesn't show inference speed. To check it, query Frigate's stats API from the command line:
 
 ```bash
-docker logs frigate 2>&1 | grep -i detector
+docker exec frigate curl -s http://127.0.0.1:5000/api/stats | jq '.detectors'
+```
+
+A Hailo-8 should report an `inference_speed` around 7ms. CPU detection runs at 80–150ms. See [AI accelerator setup](../cameras/hailo-tpu.md#part-4-verify-frigate-is-using-the-accelerator) for a version that doesn't need `jq`.
+
+Check Frigate logs for detector startup messages:
+
+```bash
+docker logs frigate 2>&1 | grep -i -E 'detector|hailo'
 ```
 
 You should see confirmation that your configured detector (Hailo or CPU) initialized successfully. Errors here mean object detection is failing or falling back to a mode you didn't intend.
@@ -303,7 +311,7 @@ When you open a support request, include:
 - Your Argus tier (Vigil, Sentinel, Enclave, or Warden) and how many cameras are active
 - What you're seeing (stuttering live view, delayed detection, choppy recordings, etc.)
 - Screenshots or notes from Cockpit showing CPU, memory, and disk usage
-- Whether a Hailo detector shows as active on Frigate's System page
+- Whether a Hailo detector shows as active under **Settings > System > Detectors and model**, and its inference speed from the stats API
 - Output from `df -h` and the last fifty to one hundred lines of `docker logs frigate` mentioning drops, errors, or detector issues
 - Any recent changes (cameras added, config edits, bitrate changes)
 
