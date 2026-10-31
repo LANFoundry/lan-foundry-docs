@@ -1,11 +1,35 @@
 # Remote access with Tailscale
 
-By default, your Argus NVR is only reachable from inside your home network. Tailscale extends that reach to any device you own (phone, laptop, work computer) without opening ports on your router or setting up a traditional VPN server.
+By default, your Argus NVR is only reachable from inside your home network. Argus systems don't include Tailscale, and we don't install it for you. It's here as an option if you want to reach the NVR from outside your home and your router can't run its own VPN server.
 
-It works by creating an encrypted peer-to-peer connection directly between your devices. Once your NVR and your phone are both on the same Tailscale network, you can reach the Frigate interface, Cockpit, ntfy, and anything else running on the NVR as if you were home.
+If your router does have a built-in WireGuard server, start with [Remote access with WireGuard](../network/vpn-wireguard.md) instead. It keeps everything on your own hardware with no outside company involved.
+
+Tailscale connects your devices (NVR, phone, laptop) into a private encrypted network without opening ports on your router. Once your NVR and your phone are both on it, you can reach the Frigate interface, Cockpit, ntfy, and anything else on the NVR as if you were home. That convenience comes with trade-offs, so read the next section before you install anything.
 
 !!! note "Not applicable to Enclave"
-    This guide assumes your network reaches the internet. [Enclave](enclave-tier.md) pairs with an air-gapped network with no WAN connectivity by design; kiosk mode on an attached monitor is the interface for that tier.
+    This guide assumes your network reaches the internet. [Enclave](../network/enclave-tier.md) pairs with an air-gapped network with no WAN connectivity by design; kiosk mode on an attached monitor is the interface for that tier.
+
+---
+
+## The risks, in plain English
+
+Installing Tailscale means letting an outside company's software and servers help decide who can get into your home network. That can be a reasonable choice, but you should know what you're agreeing to.
+
+- **Your Tailscale login becomes a key to your home.** You sign in to Tailscale with a Google, Microsoft, GitHub, or Apple account. Anyone who gets into that account can add their own device to your network and reach your NVR. Treat that login like your house key: strong password, two-factor authentication turned on.
+- **You're trusting someone else's software and servers.** The Tailscale app runs with full network access on your NVR, and Tailscale's servers decide which devices are allowed in. If there's a bug in their app or a problem on their servers, your network can be affected through no fault of your own. Tailscale has published [security bulletins](https://tailscale.com/security-bulletins) for exactly this kind of issue. If you use it, keep it updated.
+- **It goes around your router's firewall.** The NVR reaches out to Tailscale on its own, so the firewall rules and blocked ports you've set up on your router don't apply to traffic coming in over Tailscale.
+- **Subnet routing opens up more than the NVR.** The optional subnet routing step below lets every device on your Tailscale network reach every device on your home network. Never include your camera VLAN in it. That would undo the camera isolation you set up.
+- **Every device you add can reach every other device.** Out of the box, Tailscale doesn't restrict which of your devices can talk to which. A lost phone or a shared laptop that's still signed in has the same access you do.
+- **Tailscale can see which devices you have and when they connect.** It can't see what you're doing or what you're watching (that traffic is encrypted between your own devices), but the list of devices and connection times passes through their servers.
+
+### If you go ahead
+
+- Turn on two-factor authentication for the account you sign in to Tailscale with
+- Leave **key expiry** on, so devices have to re-authenticate periodically
+- Remove devices from the Tailscale admin console as soon as you stop using them
+- Use [access controls](https://tailscale.com/kb/1018/acls) to limit which devices can reach the NVR
+- Consider [Tailnet Lock](https://tailscale.com/kb/1226/tailnet-lock), which stops new devices joining unless one of your own devices approves them
+- If you'd rather not depend on Tailscale's servers at all, [Headscale](https://headscale.net) is an open-source replacement you run yourself
 
 ---
 
@@ -16,35 +40,11 @@ This guide assumes:
 - Your Argus NVR is running and you can SSH into it
 - You have a Tailscale account. The free tier supports up to 100 devices and covers personal use. Sign up at [tailscale.com](https://tailscale.com)
 
-**A note on privacy:** Tailscale's control plane (the system that authenticates devices and distributes keys) is hosted by Tailscale. They can see which devices are in your network, but not the traffic between them. That traffic travels peer-to-peer and is encrypted end-to-end. If fully self-hosted control plane matters to you, [Headscale](https://headscale.net) is an open-source alternative that runs on your own hardware, or see [Remote access with WireGuard](vpn-wireguard.md) if your router already supports it directly.
-
 ---
 
 ## Step 1 — Install Tailscale on the NVR
 
-### On Argus systems
-
-Vigil, Sentinel, and Warden ship with Tailscale installed as a container, but it's idle until you activate it: it has no auth key, so it never joins a network on its own. (See [Tailscale in the Argus stack](../about-the-stack.md#tailscale-remote-access-optional) for how it's set up.)
-
-Activate it from an SSH session on the NVR:
-
-```bash
-docker exec tailscale tailscale up
-```
-
-Tailscale will print a URL. Open it in a browser, sign in to your Tailscale account, and authorize the device. The NVR joins your tailnet as `argus-nvr`.
-
-Then get the NVR's Tailscale IP:
-
-```bash
-docker exec tailscale tailscale ip
-```
-
-This prints an address in the `100.x.x.x` range. Note it down, then skip to Step 2.
-
-### On your own hardware
-
-Install Tailscale first:
+Install Tailscale:
 
 ```bash
 curl -fsSL https://tailscale.com/install.sh | sh
@@ -102,6 +102,9 @@ To find the NVR's Tailscale IP at any time without SSH, open the Tailscale admin
 
 By default, Tailscale only gives you direct access to the NVR itself. To reach other devices on your home network while away (including your router, which is needed for hostname access in the next section), enable **subnet routing** on the NVR.
 
+!!! warning "Only advertise your main LAN"
+    Subnet routing gives every device on your tailnet access to the whole subnet you advertise. Advertise your main home LAN only. Never advertise the camera VLAN: that would let anything on your tailnet reach the cameras directly and undo the isolation that keeps them contained. See [the risks](#the-risks-in-plain-english) above.
+
 First, allow the NVR to forward traffic. Tailscale requires this on any Linux machine acting as a subnet router:
 
 ```bash
@@ -109,13 +112,7 @@ echo 'net.ipv4.ip_forward = 1' | sudo tee /etc/sysctl.d/99-tailscale.conf
 sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
 ```
 
-Then tell Tailscale to route traffic for your home subnet through the NVR. On Argus systems:
-
-```bash
-docker exec tailscale tailscale up --advertise-routes=192.168.1.0/24
-```
-
-On your own hardware:
+Then tell Tailscale to route traffic for your home subnet through the NVR:
 
 ```bash
 sudo tailscale up --advertise-routes=192.168.1.0/24
@@ -126,7 +123,7 @@ Replace `192.168.1.0/24` with your actual LAN subnet.
 Then approve the route in the Tailscale admin console:
 
 1. Go to [login.tailscale.com/admin/machines](https://login.tailscale.com/admin/machines)
-2. Click the NVR's entry (named `argus-nvr` on Argus systems)
+2. Click the NVR's entry
 3. Open the **Route settings** menu
 4. Enable the advertised subnet
 
@@ -167,7 +164,7 @@ The server shown should be your router's IP, and it should return the NVR's loca
 
 When everything is working:
 
-- `tailscale status` on the NVR (`docker exec tailscale tailscale status` on Argus) lists the NVR and your other devices, without a `Logged out` message
+- `tailscale status` on the NVR lists the NVR and your other devices, without a `Logged out` message
 - You can open Frigate at `http://100.x.x.x:5000` from a phone that is not on your home Wi-Fi
 - The Tailscale admin console shows both the NVR and your phone as connected
 - If subnet routing is enabled, the route shows as approved in the NVR's machine settings
@@ -179,5 +176,6 @@ If a connection isn't going through, confirm both devices are online in the admi
 
 ## Where to go from here
 
-- [Hardware potential](../further/hardware-potential.md), for other services worth running on the NVR that become more accessible with Tailscale in place
+- [Remote access with WireGuard](../network/vpn-wireguard.md), if you later get a router that can host WireGuard and want to drop the third-party dependency
+- [Hardware potential](../further/hardware-potential.md), for other services worth running on the NVR
 - [Tailscale documentation](https://tailscale.com/kb/), for access controls, team sharing, and exit nodes

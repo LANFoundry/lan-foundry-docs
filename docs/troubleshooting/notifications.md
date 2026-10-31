@@ -189,7 +189,7 @@ If the line is missing, add it and restart ntfy. See [Setting up push notificati
 If you're using Tailscale for remote access, the ntfy app on your phone reaches the NVR over your tailnet. Notifications arrive only when Tailscale is active on your phone. If alerts stopped after a Tailscale change, check:
 
 - Tailscale is connected on your phone, and the NVR shows as online in the Tailscale admin console
-- If the ntfy app uses `https://ntfy.internal`: subnet routing and Split DNS are still approved and configured, so that name resolves over Tailscale. See [Access services by hostname](../network/tailscale.md#optional-access-services-by-hostname)
+- If the ntfy app uses `https://ntfy.internal`: subnet routing and Split DNS are still approved and configured, so that name resolves over Tailscale. See [Access services by hostname](../privacy/remote-access.md#optional-access-services-by-hostname)
 - If the ntfy app uses the NVR's raw Tailscale IP: text-only alerts with missing snapshots are expected, because ntfy builds snapshot links from its `base-url` (`https://ntfy.internal`). Setting up Split DNS and switching the app to `https://ntfy.internal` fixes that
 
 frigate-notify doesn't need to change for either option. It always sends to ntfy over the Docker network on the NVR, and ntfy handles delivery from there.

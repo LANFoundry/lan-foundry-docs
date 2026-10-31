@@ -20,8 +20,7 @@ Each guide stands on its own, so open the one for the part you're working on.
 - **[DNS entries in OPNsense](dns-opnsense.md)** — Resolve names like `frigate.internal` to the NVR on your LAN.
 - **[Caddy reverse proxy](caddy-reverse-proxy.md)** — Reach Frigate, Arcane, and Cockpit by hostname on ports 80 and 443.
 - **[Camera VLAN on other routers and switches](vlan-other-routers.md)** — VLAN setup when you are not using OPNsense or TP-Link.
-- **[Remote access with Tailscale](tailscale.md)** — Reach the NVR securely from outside your home without opening ports.
-- **[Remote access with WireGuard](vpn-wireguard.md)** — A router-hosted alternative to Tailscale with no third-party dependency at all.
+- **[Remote access with WireGuard](vpn-wireguard.md)** — Reach the NVR from outside your home using your router's WireGuard server, with no third party involved.
 
 The last item on this list is a fork, not a next step: a hardware decision made before setup starts.
 

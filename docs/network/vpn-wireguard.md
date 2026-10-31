@@ -1,28 +1,14 @@
 # Remote access with WireGuard
 
-Tailscale, covered in [Remote access with Tailscale](tailscale.md), is the option included in the Vigil, Sentinel, and Warden stack, ready to activate. WireGuard is the option for people who'd rather not depend on anyone else's infrastructure at all, not even a control plane that only sees device metadata and never your traffic, the way Tailscale's does.
+By default, your Argus NVR is only reachable from inside your home network. Nothing in the stack opens a way in from outside. If you want to check your cameras while you're away, WireGuard on your router is the way we recommend doing it: no outside company involved, no account, and nothing running on anyone else's servers.
 
-WireGuard is a VPN protocol, not a service. There's no account to sign up for and nothing hosted on your behalf. If your router has a built-in WireGuard server, you're building a private, encrypted tunnel straight into your own network using nothing but your own hardware. The cost of that independence is that you do the work Tailscale otherwise automates: the router needs to support it in the first place, you forward a port yourself, and you configure each device by hand.
+WireGuard is a VPN protocol, not a service. There's no account to sign up for and nothing hosted on your behalf. If your router has a built-in WireGuard server, you're building a private, encrypted tunnel straight into your own network using nothing but your own hardware. The cost of that independence is a bit of setup: the router needs to support it in the first place, you forward a port yourself, and you configure each device by hand.
+
+!!! tip "Router can't run WireGuard?"
+    If your router has no built-in WireGuard server, or your internet provider puts you behind CGNAT (common on cellular, satellite, and some fiber connections, and it stops port forwarding from working), see [Remote access with Tailscale](../privacy/remote-access.md). Read [its risks section](../privacy/remote-access.md#the-risks-in-plain-english) before you decide.
 
 !!! note "Not applicable to Enclave"
     Forwarding a port requires a router with a WAN connection to forward it on. [Enclave](enclave-tier.md) pairs with an air-gapped network with no WAN connectivity by design; kiosk mode on an attached monitor is the interface for that tier.
-
----
-
-## WireGuard vs. Tailscale
-
-Read this before you start setting anything up. Both get you into your home network from anywhere; they differ in who's doing the work and what you're trusting.
-
-| | **Tailscale** | **WireGuard on your router** |
-|---|---|---|
-| **Runs on** | A container on the NVR | Your router itself |
-| **Third-party dependency** | Tailscale's hosted control plane (sees device metadata, not traffic) | None |
-| **Setup effort** | Install once, sign in on each device | Configure the router, forward a port, hand-configure each device |
-| **Works behind CGNAT / hard networks** | Yes, falls back to a relay if a direct connection is blocked | Not reliably; needs a port actually reachable from the internet |
-| **Requires router support** | No | Yes, only some routers include a WireGuard server |
-| **Hostname access (`frigate.internal`, etc.)** | Needs Split DNS configured | Works by just pointing the client at your router's DNS, no extra configuration |
-
-If your router doesn't have a built-in WireGuard server, or you're behind CGNAT (common with some ISPs, especially on cellular or satellite connections), Tailscale is the more reliable path; it's also already sitting on your Argus system. Keep reading if your router supports WireGuard and you'd rather keep remote access entirely in-house.
 
 ---
 
@@ -89,7 +75,7 @@ Once connected, use the NVR's normal LAN address and ports, the same ones you'd 
 
 Replace `192.168.1.100` with your NVR's actual static IP.
 
-Hostname access (`https://frigate.internal`, and so on) works too, and needs less setup than the equivalent Tailscale path: point the WireGuard client's DNS setting at your router's LAN IP, and any device on the tunnel resolves `*.internal` names the same way a device physically on your LAN does. Tailscale needs Split DNS configured separately because its DNS resolution doesn't automatically know about your router; here, the router *is* the VPN server, so it's already in the loop.
+Hostname access (`https://frigate.internal`, and so on) works too: point the WireGuard client's DNS setting at your router's LAN IP, and any device on the tunnel resolves `*.internal` names the same way a device physically on your LAN does. The router *is* the VPN server, so it's already in the loop.
 
 ---
 
@@ -108,6 +94,6 @@ If the tunnel shows as active but nothing loads, check the peer's `AllowedIPs`: 
 
 ## Where to go from here
 
-- [Remote access with Tailscale](tailscale.md), for the option that needs no router support and no port forwarding
+- [Remote access with Tailscale](../privacy/remote-access.md), the fallback if your router can't host WireGuard
 - [Caddy reverse proxy](caddy-reverse-proxy.md), for how the `.internal` hostnames this guide reaches actually work
 - [Hardware potential](../further/hardware-potential.md), for other services worth running that become more useful once remote access is in place

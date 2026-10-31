@@ -277,4 +277,4 @@ With Caddy running, all NVR services are accessible by hostname from your main L
 
 - [Setting up a camera VLAN in OPNsense](vlan-opnsense.md) — isolate your cameras from the rest of your network
 - [Understanding network segmentation and VLANs](../privacy/blocking-telemetry.md) — what VLAN segmentation does and why cameras belong on an isolated segment
-- [Remote access with Tailscale](tailscale.md) — reach your NVR from outside your home network
+- [Remote access with WireGuard](vpn-wireguard.md) — reach your NVR from outside your home network

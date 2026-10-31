@@ -37,7 +37,7 @@ Where these come from, in more depth:
 | **Network model** | VLAN-segmented: cameras isolated on their own VLAN | Air-gapped: no WiFi on the NVR or router, and the router's WAN port is never connected |
 | **Internet connection** | Yes, through your router | None |
 | **Reaching the NVR from your LAN** | By hostname, like `https://frigate.internal` | Not available |
-| **Remote access** | [Tailscale](network/tailscale.md) (included, activated by you) or [WireGuard](network/vpn-wireguard.md) | Not available |
+| **Remote access** | Not included. Add [WireGuard](network/vpn-wireguard.md) on your router, or [Tailscale](privacy/remote-access.md) if you choose to install it | Not available |
 | **Push notifications** | [ntfy](notifications/ntfy-setup.md) on your phone | Not available; events show on the attached monitor |
 | **How you use it day to day** | Browser on any device on your network | Kiosk mode on an attached monitor and keyboard |
 
@@ -49,7 +49,7 @@ The networked tiers trade a small, well-isolated network exposure for remote vie
 
 Almost every guide on this site applies to all four tiers. The exceptions need either a network path to the NVR or an internet connection, and Enclave has neither:
 
-- [Remote access with Tailscale](network/tailscale.md) and [Remote access with WireGuard](network/vpn-wireguard.md)
+- [Remote access with WireGuard](network/vpn-wireguard.md) and [Remote access with Tailscale](privacy/remote-access.md)
 - [Setting up push notifications](notifications/ntfy-setup.md) and [Not receiving notifications](troubleshooting/notifications.md)
 - [Can't reach service by hostname](troubleshooting/hostname.md)
 - [Updating containers](maintenance/container-updates.md) and [Updating Ubuntu Server](maintenance/ubuntu-updates.md), which pull updates from the internet. Enclave ships with current software; updating it afterwards is up to you

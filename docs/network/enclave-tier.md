@@ -112,7 +112,7 @@ The VLAN, DHCP, firewall, and local DNS configuration is the same as covered in 
 
 ## What doesn't apply here
 
-[Remote access with Tailscale](tailscale.md) and [Remote access with WireGuard](vpn-wireguard.md) are both **not applicable** to Enclave, since both need outbound network connectivity, which this tier doesn't have. If remote access matters to you, Sentinel is the tier to look at instead.
+[Remote access with WireGuard](vpn-wireguard.md) and [Remote access with Tailscale](../privacy/remote-access.md) are both **not applicable** to Enclave, since both need outbound network connectivity, which this tier doesn't have. If remote access matters to you, Sentinel is the tier to look at instead.
 
 The same goes for two troubleshooting guides, [Can't reach service by hostname](../troubleshooting/hostname.md) and [Not receiving notifications](../troubleshooting/notifications.md). The rest of [Troubleshooting](../troubleshooting/index.md) applies; run its commands from the local terminal instead of over SSH.
 

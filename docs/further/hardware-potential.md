@@ -61,6 +61,8 @@ See [Adding Home Assistant](home-assistant.md) for installation options and trad
 
 Tailscale has a free tier that covers personal use. It is not fully open source (the control plane is a hosted service), but the traffic itself is encrypted and peer-to-peer. For a fully self-hosted alternative, **Headscale** is an open-source implementation of the Tailscale control server.
 
+Argus systems don't include Tailscale. If you're thinking about adding it, [read what you're trusting](../privacy/remote-access.md#the-risks-in-plain-english) first, and check whether your router can run [WireGuard](../network/vpn-wireguard.md) instead.
+
 ### File storage and sync
 
 **Nextcloud** is a self-hosted file sync and collaboration platform, a local alternative to Dropbox or Google Drive. It runs in Docker and can sync files from phones and computers to the NVR.

@@ -14,7 +14,7 @@ Frigate → frigate-notify → ntfy → your phone
 
 **frigate-notify** runs alongside Frigate on the same Docker network and polls Frigate's event API every 30 seconds. When a new event is detected, frigate-notify fetches the event details, grabs the snapshot URL from Frigate, and sends a formatted notification to ntfy with the snapshot attached.
 
-**ntfy** receives the notification and queues it for delivery. When your phone's ntfy app is connected to your NVR on the local network, the alert arrives within seconds. If you've configured remote delivery, ntfy forwards the notification through an upstream relay or Tailscale so you receive it when you're away from home.
+**ntfy** receives the notification and queues it for delivery. When your phone's ntfy app is connected to your NVR on the local network, the alert arrives within seconds. If you've configured remote delivery, ntfy forwards the notification through an upstream relay or a VPN so you receive it when you're away from home.
 
 ntfy caches snapshots locally in a volume on the NVR so your phone can download the image when it receives the alert. This is why ntfy requires `base-url` to be configured — it needs to know its own address to construct the attachment download URL it includes in each notification.
 
@@ -133,16 +133,18 @@ upstream-base-url: "https://ntfy.sh"
 
 Restart the ntfy container after saving. The ntfy app on your phone will receive alerts over cellular or any internet connection automatically.
 
-**Privacy note:** When upstream is enabled, the notification text — camera name, event type — and the snapshot attachment pass through ntfy.sh's servers on the way to your phone. No camera footage or RTSP stream is ever involved. If you want to keep notification content entirely off third-party infrastructure, use Tailscale instead.
+**Privacy note:** When upstream is enabled, the notification text — camera name, event type — and the snapshot attachment pass through ntfy.sh's servers on the way to your phone. No camera footage or RTSP stream is ever involved. If you want to keep notification content entirely off third-party infrastructure on Android, reach the NVR over a VPN instead (Option B).
 
 !!! note "iOS users"
     Apple requires all push notifications to route through Apple's servers (APNs), regardless of whether you use ntfy.sh or another relay. When the ntfy iOS app connects to a self-hosted server, it uses ntfy.sh's relay to reach APNs. Notification text and snapshots transit ntfy.sh's servers on the way to your iPhone, an Apple platform constraint that applies to any self-hosted push service.
 
-### Option B — Tailscale
+### Option B — WireGuard or Tailscale
 
-With Tailscale running on both the NVR and your phone, the ntfy app connects to the NVR over your tailnet from anywhere. On Android, that means no third-party relay is involved. On iOS, Apple's push requirement still applies (see the note above), so notification text and snapshots transit ntfy.sh on the way to an iPhone either way.
+If your phone can reach the NVR over a VPN, the ntfy app connects to it directly from anywhere. On Android, that means no third-party relay is involved. On iOS, Apple's push requirement still applies (see the note above), so notification text and snapshots transit ntfy.sh on the way to an iPhone either way.
 
-See [Remote access with Tailscale](../network/tailscale.md) for setup. The simplest way to make this work is to set up [subnet routing and Split DNS](../network/tailscale.md#optional-access-services-by-hostname) there, so `https://ntfy.internal` resolves over Tailscale and the ntfy app can keep using that address. Pointing the app at the NVR's raw Tailscale IP instead can get you the notification text without the snapshot, because ntfy builds snapshot links from its `base-url` (`https://ntfy.internal`). Alerts arrive as long as Tailscale is connected on your phone.
+With [WireGuard on your router](../network/vpn-wireguard.md), point the WireGuard client's DNS at your router and the app can keep using `https://ntfy.internal`. Alerts arrive as long as the tunnel is active on your phone.
+
+Tailscale isn't included on Argus systems; if you choose to install it, [read the risks](../privacy/remote-access.md#the-risks-in-plain-english) first. See [Remote access with Tailscale](../privacy/remote-access.md) for setup. The simplest way to make this work is to set up [subnet routing and Split DNS](../privacy/remote-access.md#optional-access-services-by-hostname) there, so `https://ntfy.internal` resolves over Tailscale and the ntfy app can keep using that address. Pointing the app at the NVR's raw Tailscale IP instead can get you the notification text without the snapshot, because ntfy builds snapshot links from its `base-url` (`https://ntfy.internal`). Alerts arrive as long as Tailscale is connected on your phone.
 
 ---
 

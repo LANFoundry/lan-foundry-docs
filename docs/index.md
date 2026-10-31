@@ -29,7 +29,7 @@ This library is designed to stand on its own as well as support our product line
 | Phase | What you will find |
 |---|---|
 | **Now** | General guides for any local Frigate setup: privacy, network, cameras, storage, maintenance, troubleshooting. No LAN Foundry hardware required. Some pages are **living documents** (for example the [tested camera list](cameras/tested-cameras.md)). |
-| **At Argus launch** | Product **Getting started** guides: unboxing, first boot, Cockpit and Arcane orientation, Tailscale on the Argus workflow. Until then, Argus owners can follow the general guides; they match how we configure systems before they leave the shop. |
+| **At Argus launch** | Product **Getting started** guides: unboxing, first boot, Cockpit and Arcane orientation, remote access options. Until then, Argus owners can follow the general guides; they match how we configure systems before they leave the shop. |
 | **After launch** | Updates as the stack changes, troubleshooting expanded from real support patterns, and new sections when we ship additional locally hosted products beyond our Argus line of NVRs. |
 
 Search and each section **Overview** reflect what is published today.
@@ -44,8 +44,8 @@ Use the tabs above to browse by topic; Privacy & Security and Going Further are 
 |---|---|
 | [The software stack](about-the-stack.md) | What runs on Argus, why each piece was chosen, and alternatives |
 | [Argus tiers at a glance](argus-tiers.md) | Vigil, Sentinel, Warden, and Enclave side by side: cameras, storage, and network access |
-| [Privacy & Security](privacy/index.md) | Why local recording matters, ONVIF basics, VLAN concepts |
-| [Network Setup](network/index.md) | Camera VLANs, DNS, Caddy hostnames, static IPs, Tailscale |
+| [Privacy & Security](privacy/index.md) | Why local recording matters, ONVIF basics, VLAN concepts, Tailscale and its risks |
+| [Network Setup](network/index.md) | Camera VLANs, DNS, Caddy hostnames, static IPs, WireGuard remote access |
 | [Camera Setup](cameras/index.md) | Adding cameras to Frigate, zones, detection tuning |
 | [Notifications](notifications/index.md) | ntfy push alerts from Frigate |
 | [Storage](storage/index.md) | How recordings are stored, retention, drive health, expansion |

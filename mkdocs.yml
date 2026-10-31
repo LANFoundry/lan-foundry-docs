@@ -106,7 +106,6 @@ nav:
     - Caddy reverse proxy: network/caddy-reverse-proxy.md
     - Static IP assignment: network/static-ip.md
     - Camera VLAN on other routers and switches: network/vlan-other-routers.md
-    - Remote access with Tailscale: network/tailscale.md
     - Remote access with WireGuard: network/vpn-wireguard.md
     - "Enclave: the air-gapped tier": network/enclave-tier.md
   - Camera Setup:
@@ -163,6 +162,7 @@ nav:
       - How much does your router matter: privacy/privacy-levels.md
       - What is ONVIF: privacy/what-is-onvif.md
       - Understanding network segmentation and VLANs: privacy/blocking-telemetry.md
+      - Remote access with Tailscale: privacy/remote-access.md
     - Going Further:
       - Overview: further/index.md
       - Additional notification integrations: further/notification-integrations.md

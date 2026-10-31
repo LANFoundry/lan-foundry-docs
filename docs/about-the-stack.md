@@ -6,7 +6,7 @@ Argus runs on a set of open-source tools that were chosen for specific reasons: 
 
 ## Why containers?
 
-All of the Argus services run as Docker containers on the NVR host. This is worth explaining because it's not obvious why you'd run a camera system this way rather than installing software directly on the machine.
+The core Argus services run as Docker containers on the NVR host. This is worth explaining because it's not obvious why you'd run a camera system this way rather than installing software directly on the machine.
 
 **Isolation.** Each service lives in its own container. A Frigate update can't break ntfy. A misconfigured Caddy can't crash Arcane. When something goes wrong, the blast radius is contained.
 
@@ -20,7 +20,79 @@ The main tradeoff is a layer of abstraction to learn. When something goes wrong,
 
 ---
 
-## The services
+## The containers
+
+These all run in Docker on the NVR, listed from the foundation up: Docker itself, the tool you manage it with, then the services in roughly the order you'll rely on them.
+
+### Docker — Containerization
+
+Docker is the runtime that runs all other services as isolated containers.
+
+**Why Docker:** It's the most widely understood container platform with the largest ecosystem of pre-built images. Every service in the Argus stack ships an official Docker image. Arcane, the container management UI we include, is built around Docker. The community resources, troubleshooting forums, and documentation for Frigate, ntfy, and Caddy all assume Docker.
+
+**Alternatives:**
+
+| Option | Trade-off |
+|---|---|
+| **Podman** | Docker-compatible CLI, rootless by default, good for security-focused setups |
+| **LXC / Proxmox** | OS-level isolation rather than process-level, more overhead, better for running full OS environments |
+| **Bare metal** | No abstraction layer, but updates are manual per-service and harder to reproduce across systems |
+| **NixOS** | Fully declarative, highly reproducible, but steep learning curve |
+
+---
+
+### Arcane — Container Management
+
+Arcane is a web UI for managing Docker. It shows running containers, lets you start and stop services, view logs, check for image updates, and manage Docker Compose projects, all from a browser rather than the command line.
+
+**Why Arcane:** It makes the Docker layer navigable for people who aren't comfortable with the CLI. Being able to restart a container, check container status, or update an image in a browser without SSH access significantly lowers the barrier for day-to-day management. Arcane is built around Compose: each project is a folder under `/opt/lanfoundry/stacks/` holding a compose file, so what you see in the browser and what's on disk are the same thing, and either one can be edited. It's fully open source, with no paid tier holding back features. Most service configuration files live on the host under `/opt/lanfoundry/config/` and are mounted read-only into their containers, so you edit them on the host over SSH, then restart the container from Arcane or the command line.
+
+Arcane is bootstrapped first, before the rest of the stack, so it can then deploy everything else as managed projects. This is also where the shared `nvr-network` every other service's Compose block references gets defined:
+
+??? note "Arcane's Docker Compose service"
+    ```yaml
+    services:
+      arcane:
+        container_name: arcane
+        image: ghcr.io/getarcaneapp/manager:latest
+        restart: unless-stopped
+        networks:
+          - nvr-network
+        ports:
+          - "3552:3552"
+        environment:
+          - APP_URL=https://arcane.internal
+          - PUID=1000
+          - PGID=1000
+          - ENCRYPTION_KEY=<generate with: openssl rand -hex 32>
+          - PROJECTS_DIRECTORY=/opt/lanfoundry/stacks
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - arcane-data:/app/data
+          - /opt/lanfoundry/stacks:/opt/lanfoundry/stacks
+
+    volumes:
+      arcane-data:
+
+    networks:
+      nvr-network:
+        name: nvr-network
+        external: true
+    ```
+
+The projects folder is mounted at the same path inside the container as on the host, so relative paths in compose files resolve the same way for Arcane and for Docker. `ENCRYPTION_KEY` protects the secrets Arcane stores in its database; keep a copy of it with your backups.
+
+**Alternatives:**
+
+| Option | Trade-off |
+|---|---|
+| **Portainer** | Broader feature set and the longest track record, but its free Community Edition is being discontinued |
+| **Dockge** | Focused on Compose stacks, modern UI, lighter weight, less full-featured |
+| **Yacht** | Simple, minimal, less active development |
+| **Lazydocker** | Terminal UI, fast, no web access, requires CLI comfort |
+| **Raw Docker CLI** | No overhead, full control, requires CLI comfort and SSH access |
+
+---
 
 ### Frigate — NVR and AI Object Detection
 
@@ -68,23 +140,6 @@ This is roughly what the Frigate service looks like in our Docker Compose stack.
 | **Shinobi** | Lighter weight, JavaScript-based, but less active development |
 | **Scrypted** | Modern, plugin-based, good HomeKit support, but less mature for NVR use |
 | **Agent DVR / iSpy** | Windows-native, good UI, not open-source |
-
----
-
-### Docker — Containerization
-
-Docker is the runtime that runs all other services as isolated containers.
-
-**Why Docker:** It's the most widely understood container platform with the largest ecosystem of pre-built images. Every service in the Argus stack ships an official Docker image. Arcane, the container management UI we include, is built around Docker. The community resources, troubleshooting forums, and documentation for Frigate, ntfy, and Caddy all assume Docker.
-
-**Alternatives:**
-
-| Option | Trade-off |
-|---|---|
-| **Podman** | Docker-compatible CLI, rootless by default, good for security-focused setups |
-| **LXC / Proxmox** | OS-level isolation rather than process-level, more overhead, better for running full OS environments |
-| **Bare metal** | No abstraction layer, but updates are manual per-service and harder to reproduce across systems |
-| **NixOS** | Fully declarative, highly reproducible, but steep learning curve |
 
 ---
 
@@ -169,60 +224,6 @@ And the Caddyfile it mounts:
 
 ---
 
-### ntfy — Push Notifications
-
-ntfy is a self-hosted push notification server. When frigate-notify sends it a notification, ntfy queues it and delivers it to subscribed devices: your phone, a browser tab, anything running the ntfy app or subscribed via the API.
-
-**Why ntfy:** It requires no account, no third-party service, and no ongoing subscription. You run it, you control it. It has well-maintained apps for iOS and Android. On Android, it supports UnifiedPush, which routes notifications entirely within your own infrastructure without passing through Google's servers. For iOS, notifications must transit Apple's servers regardless of what notification service you use, an Apple platform constraint that applies to any self-hosted push service.
-
-The ntfy service:
-
-??? note "ntfy's Docker Compose service"
-    ```yaml
-    services:
-      ntfy:
-        container_name: ntfy
-        image: binwiederhier/ntfy:latest
-        restart: unless-stopped
-        networks:
-          - nvr-network
-        ports:
-          - "2586:80"
-        volumes:
-          - ntfy-cache:/var/cache/ntfy
-          - /opt/lanfoundry/config/ntfy:/etc/ntfy:ro
-        command: serve
-    ```
-
-And its server config — notice the upstream relay to `ntfy.sh` is disabled by default, so notifications never leave your network unless you opt in:
-
-??? note "ntfy's server.yml"
-    ```yaml
-    # ntfy server.yml
-    # Upstream relay to ntfy.sh is intentionally disabled for privacy-first
-    # operation — notifications never leave your network by default. To enable
-    # remote push later (notification text transits ntfy.sh), add:
-    #   upstream-base-url: "https://ntfy.sh"
-    # then restart the ntfy container.
-
-    base-url: https://ntfy.internal
-    attachment-cache-dir: /var/cache/ntfy/attachments
-    attachment-total-size-limit: 5G
-    attachment-file-size-limit: 15M
-    ```
-
-**Alternatives:**
-
-| Option | Trade-off |
-|---|---|
-| **Gotify** | Simpler, self-hosted, but no native iOS push support without external relay |
-| **Pushover** | Polished apps, reliable delivery, but not self-hosted; requires account and one-time $5 per platform |
-| **Telegram bot** | Free and widely used, but requires a Telegram account and routes through Telegram's servers |
-| **Home Assistant** | If HA is already in your stack, its notification system covers most of the same ground |
-| **Frigate's built-in ntfy** | Simpler config, no frigate-notify needed, but less flexible filtering and no snapshot attachments in older versions |
-
----
-
 ### frigate-notify — Event Routing
 
 frigate-notify runs alongside Frigate and bridges its event API to notification providers. It polls Frigate every 30 seconds for new events, formats a notification, attaches the event snapshot, and sends it to ntfy.
@@ -286,74 +287,57 @@ Other providers (Discord, Gotify, Pushover, Telegram, SMTP, and more) can be ena
 
 ---
 
-### Arcane — Container Management
+### ntfy — Push Notifications
 
-Arcane is a web UI for managing Docker. It shows running containers, lets you start and stop services, view logs, check for image updates, and manage Docker Compose projects, all from a browser rather than the command line.
+ntfy is a self-hosted push notification server. When frigate-notify sends it a notification, ntfy queues it and delivers it to subscribed devices: your phone, a browser tab, anything running the ntfy app or subscribed via the API.
 
-**Why Arcane:** It makes the Docker layer navigable for people who aren't comfortable with the CLI. Being able to restart a container, check container status, or update an image in a browser without SSH access significantly lowers the barrier for day-to-day management. Arcane is built around Compose: each project is a folder under `/opt/lanfoundry/stacks/` holding a compose file, so what you see in the browser and what's on disk are the same thing, and either one can be edited. It's fully open source, with no paid tier holding back features. Most service configuration files live on the host under `/opt/lanfoundry/config/` and are mounted read-only into their containers, so you edit them on the host over SSH, then restart the container from Arcane or the command line.
+**Why ntfy:** It requires no account, no third-party service, and no ongoing subscription. You run it, you control it. It has well-maintained apps for iOS and Android. On Android, it supports UnifiedPush, which routes notifications entirely within your own infrastructure without passing through Google's servers. For iOS, notifications must transit Apple's servers regardless of what notification service you use, an Apple platform constraint that applies to any self-hosted push service.
 
-Arcane is bootstrapped first, before the rest of the stack, so it can then deploy everything else as managed projects. This is also where the shared `nvr-network` every other service's Compose block references gets defined:
+The ntfy service:
 
-??? note "Arcane's Docker Compose service"
+??? note "ntfy's Docker Compose service"
     ```yaml
     services:
-      arcane:
-        container_name: arcane
-        image: ghcr.io/getarcaneapp/manager:latest
+      ntfy:
+        container_name: ntfy
+        image: binwiederhier/ntfy:latest
         restart: unless-stopped
         networks:
           - nvr-network
         ports:
-          - "3552:3552"
-        environment:
-          - APP_URL=https://arcane.internal
-          - PUID=1000
-          - PGID=1000
-          - ENCRYPTION_KEY=<generate with: openssl rand -hex 32>
-          - PROJECTS_DIRECTORY=/opt/lanfoundry/stacks
+          - "2586:80"
         volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-          - arcane-data:/app/data
-          - /opt/lanfoundry/stacks:/opt/lanfoundry/stacks
-
-    volumes:
-      arcane-data:
-
-    networks:
-      nvr-network:
-        name: nvr-network
-        external: true
+          - ntfy-cache:/var/cache/ntfy
+          - /opt/lanfoundry/config/ntfy:/etc/ntfy:ro
+        command: serve
     ```
 
-The projects folder is mounted at the same path inside the container as on the host, so relative paths in compose files resolve the same way for Arcane and for Docker. `ENCRYPTION_KEY` protects the secrets Arcane stores in its database; keep a copy of it with your backups.
+And its server config — notice the upstream relay to `ntfy.sh` is disabled by default, so notifications never leave your network unless you opt in:
+
+??? note "ntfy's server.yml"
+    ```yaml
+    # ntfy server.yml
+    # Upstream relay to ntfy.sh is intentionally disabled for privacy-first
+    # operation — notifications never leave your network by default. To enable
+    # remote push later (notification text transits ntfy.sh), add:
+    #   upstream-base-url: "https://ntfy.sh"
+    # then restart the ntfy container.
+
+    base-url: https://ntfy.internal
+    attachment-cache-dir: /var/cache/ntfy/attachments
+    attachment-total-size-limit: 5G
+    attachment-file-size-limit: 15M
+    ```
 
 **Alternatives:**
 
 | Option | Trade-off |
 |---|---|
-| **Portainer** | Broader feature set and the longest track record, but its free Community Edition is being discontinued |
-| **Dockge** | Focused on Compose stacks, modern UI, lighter weight, less full-featured |
-| **Yacht** | Simple, minimal, less active development |
-| **Lazydocker** | Terminal UI, fast, no web access, requires CLI comfort |
-| **Raw Docker CLI** | No overhead, full control, requires CLI comfort and SSH access |
-
----
-
-### Cockpit — Host System Management
-
-Cockpit provides a browser-based dashboard for the NVR host operating system. CPU, memory, disk usage, running services, system logs, and basic network info, all accessible at `https://cockpit.internal` without SSH.
-
-**Why Cockpit:** It's maintained by Red Hat and packaged in Ubuntu's standard repositories, which means it gets security updates through the normal OS update process. It adds almost no overhead, and covers the most common reason you'd want to SSH into the host: checking that the system is healthy. It doesn't retain history or alert on thresholds, but for a dedicated NVR it doesn't need to.
-
-**Alternatives:**
-
-| Option | Trade-off |
-|---|---|
-| **Webmin** | More features, older codebase, heavier |
-| **Glances** | Lightweight real-time system view, no persistent management features |
-| **netdata** | Beautiful dashboards, historical data, more setup and resource use |
-| **Grafana + Prometheus** | Full observability stack, significant setup and overhead for a single-node NVR |
-| **SSH only** | No overhead, requires CLI comfort |
+| **Gotify** | Simpler, self-hosted, but no native iOS push support without external relay |
+| **Pushover** | Polished apps, reliable delivery, but not self-hosted; requires account and one-time $5 per platform |
+| **Telegram bot** | Free and widely used, but requires a Telegram account and routes through Telegram's servers |
+| **Home Assistant** | If HA is already in your stack, its notification system covers most of the same ground |
+| **Frigate's built-in ntfy** | Simpler config, no frigate-notify needed, but less flexible filtering and no snapshot attachments in older versions |
 
 ---
 
@@ -392,52 +376,25 @@ Notice there's no `ports:` line. Dozzle is only reachable through Caddy, by cont
 
 ---
 
-### Tailscale — Remote Access (optional)
+## Outside the containers
 
-Tailscale is included in the stack but inactive by default. It's the answer for anyone who wants to check their footage away from home but doesn't have a router capable of running a proper WireGuard VPN gateway.
+These are part of an Argus setup but don't run in Docker: Cockpit is installed directly on the host operating system, OPNsense runs on your router, and remote access is something you add yourself if you want it.
 
-**Why Tailscale:** It requires no port forwarding, no static IP, and no firewall rules on the router. It builds a private mesh network between your devices using WireGuard under the hood, so remote access to the NVR host works the same whether you're on your phone's cellular connection or someone else's Wi-Fi. Because we can't assume every customer's router supports VLANs and site-to-site VPN the way OPNsense does, having a container-level option keeps remote access possible without touching the router.
+### Cockpit — Host System Management
 
-The container ships without a pre-auth key, so it sits idle until you opt in:
+Cockpit provides a browser-based dashboard for the NVR host operating system. CPU, memory, disk usage, running services, system logs, and basic network info, all accessible at `https://cockpit.internal` without SSH.
 
-??? note "Tailscale's Docker Compose service"
-    ```yaml
-    services:
-      tailscale:
-        container_name: tailscale
-        image: tailscale/tailscale:stable
-        restart: unless-stopped
-        network_mode: host
-        cap_add:
-          - NET_ADMIN
-          - NET_RAW
-        devices:
-          - /dev/net/tun:/dev/net/tun
-        environment:
-          TS_HOSTNAME: "argus-nvr"
-          TS_STATE_DIR: /var/lib/tailscale
-          TS_USERSPACE: "false"
-          TS_AUTHKEY: ""        # blank = inactive until you authenticate
-        volumes:
-          - tailscale-state:/var/lib/tailscale
-    ```
-
-With no auth key, the container runs but never joins a network. To activate it, either pass a pre-auth key generated from the [Tailscale admin console](https://login.tailscale.com/admin/machines) at install time, or authenticate manually after the fact:
-
-```bash
-docker exec tailscale tailscale up
-```
-
-This is the option for customers without router-level VPN. See [OPNsense](#opnsense-firewall-and-router) below for the more capable router-based approach.
+**Why Cockpit:** It's maintained by Red Hat and packaged in Ubuntu's standard repositories, which means it gets security updates through the normal OS update process. It adds almost no overhead, and covers the most common reason you'd want to SSH into the host: checking that the system is healthy. It doesn't retain history or alert on thresholds, but for a dedicated NVR it doesn't need to.
 
 **Alternatives:**
 
 | Option | Trade-off |
 |---|---|
-| **OPNsense WireGuard** | Router-level VPN, no extra container, requires router hardware capable of running OPNsense |
-| **Ubiquiti UniFi VPN** | Polished, but cloud-account dependent |
-| **ZeroTier** | Similar mesh model to Tailscale, smaller community |
-| **Manual WireGuard** | Full control, no coordination server, more setup |
+| **Webmin** | More features, older codebase, heavier |
+| **Glances** | Lightweight real-time system view, no persistent management features |
+| **netdata** | Beautiful dashboards, historical data, more setup and resource use |
+| **Grafana + Prometheus** | Full observability stack, significant setup and overhead for a single-node NVR |
+| **SSH only** | No overhead, requires CLI comfort |
 
 ---
 
@@ -457,6 +414,21 @@ OPNsense is not part of the Argus container stack. It runs on a separate device,
 | **OpenWRT** | Runs on consumer router hardware, lighter, less UI polish |
 | **Ubiquiti UniFi** | Polished hardware and software, but cloud-account dependent for full features |
 | **Consumer router** | Simple setup, but limited or no VLAN and local DNS support; not recommended for camera network isolation |
+
+---
+
+### Remote access
+
+Nothing in the stack opens a way into your network from outside. Out of the box, the NVR is only reachable from devices on your home network.
+
+If you want to check your footage while you're away, that's something you add yourself, and the choice of how is yours:
+
+| Option | Trade-off |
+|---|---|
+| **[WireGuard on your router](network/vpn-wireguard.md)** | What we recommend. Runs on your own hardware with no third party, but needs a router with a built-in WireGuard server and one forwarded port |
+| **[Tailscale](privacy/remote-access.md)** | Works with any router and behind CGNAT, but you're trusting Tailscale's servers and your login provider with access to your network. [Read the risks](privacy/remote-access.md#the-risks-in-plain-english) first |
+| **Headscale** | Same model as Tailscale with a control server you host yourself, more setup |
+| **ZeroTier** | Similar mesh model to Tailscale, with the same kind of third-party trust |
 
 ---
 
