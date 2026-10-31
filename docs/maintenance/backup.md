@@ -34,7 +34,7 @@ You do **not** need to back up Docker images. They can be pulled again from the 
 Frigate mounts its config directory into the container at `/config`. On the host:
 
 ```bash
-docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}'
+sudo docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}'
 ```
 
 The file you want is `config.yml` inside that folder.
@@ -44,7 +44,7 @@ The file you want is `config.yml` inside that folder.
 If you followed the [Caddy reverse proxy guide](../network/caddy-reverse-proxy.md), the Caddyfile is on the host at the path you mounted when creating the container. Check mounts with:
 
 ```bash
-docker inspect caddy --format '{{ range .Mounts }}{{ .Source }} -> {{ .Destination }}{{ "\n" }}{{ end }}'
+sudo docker inspect caddy --format '{{ range .Mounts }}{{ .Source }} -> {{ .Destination }}{{ "\n" }}{{ end }}'
 ```
 
 Look for the mount mapped to `/etc/caddy/Caddyfile`.
@@ -78,14 +78,14 @@ Adjust `~/nvr-backups` if you prefer a different location on the **boot drive**.
 ### Copy Frigate config
 
 ```bash
-FRIGATE_CONFIG=$(docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}')
+FRIGATE_CONFIG=$(sudo docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}')
 cp "$FRIGATE_CONFIG/config.yml" "$BACKUP_DIR/config.yml"
 ```
 
 ### Copy Caddyfile (if present)
 
 ```bash
-CADDYFILE=$(docker inspect caddy --format '{{ range .Mounts }}{{ if eq .Destination "/etc/caddy/Caddyfile" }}{{ .Source }}{{ end }}{{ end }}')
+CADDYFILE=$(sudo docker inspect caddy --format '{{ range .Mounts }}{{ if eq .Destination "/etc/caddy/Caddyfile" }}{{ .Source }}{{ end }}{{ end }}')
 if [ -n "$CADDYFILE" ] && [ -f "$CADDYFILE" ]; then
   cp "$CADDYFILE" "$BACKUP_DIR/Caddyfile"
 fi

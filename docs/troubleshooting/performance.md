@@ -121,7 +121,7 @@ cameras:
 After changing `config.yml`, restart Frigate:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 ### Lower detection resolution
@@ -158,7 +158,7 @@ In the Frigate web interface, open **Settings > System > Detectors and model** a
 The web interface doesn't show inference speed. To check it, query Frigate's stats API from the command line:
 
 ```bash
-docker exec frigate curl -s http://127.0.0.1:5000/api/stats | jq '.detectors'
+sudo docker exec frigate curl -s http://127.0.0.1:5000/api/stats | jq '.detectors'
 ```
 
 A Hailo-8 should report an `inference_speed` around 7ms. CPU detection runs at 80–150ms. See [AI accelerator setup](../cameras/hailo-tpu.md#part-4-verify-frigate-is-using-the-accelerator) for a version that doesn't need `jq`.
@@ -166,7 +166,7 @@ A Hailo-8 should report an `inference_speed` around 7ms. CPU detection runs at 8
 Check Frigate logs for detector startup messages:
 
 ```bash
-docker logs frigate 2>&1 | grep -i -E 'detector|hailo'
+sudo docker logs frigate 2>&1 | grep -i -E 'detector|hailo'
 ```
 
 You should see confirmation that your configured detector (Hailo or CPU) initialized successfully. Errors here mean object detection is failing or falling back to a mode you didn't intend.
@@ -234,7 +234,7 @@ Ask:
 If you're within tier limits and using sub streams for detect but still seeing drops, check the Frigate logs for ffmpeg errors:
 
 ```bash
-docker logs frigate --tail 100 | grep -i "drop\|error\|warn"
+sudo docker logs frigate --tail 100 | grep -i "drop\|error\|warn"
 ```
 
 Look for messages about frame drops, decoding errors, or streams falling behind. The log usually names the camera involved.
@@ -300,7 +300,7 @@ The guides on this site are free for everyone, whether you bought hardware from 
 
 **If you're running your own hardware**
 
-The Frigate community forum and documentation are your best resources for performance tuning on custom hardware. Bring output from `docker logs frigate --tail 100`, your camera count, and whether you're using an AI accelerator.
+The Frigate community forum and documentation are your best resources for performance tuning on custom hardware. Bring output from `sudo docker logs frigate --tail 100`, your camera count, and whether you're using an AI accelerator.
 
 **If you purchased an Argus system from LAN Foundry**
 
@@ -312,7 +312,7 @@ When you open a support request, include:
 - What you're seeing (stuttering live view, delayed detection, choppy recordings, etc.)
 - Screenshots or notes from Cockpit showing CPU, memory, and disk usage
 - Whether a Hailo detector shows as active under **Settings > System > Detectors and model**, and its inference speed from the stats API
-- Output from `df -h` and the last fifty to one hundred lines of `docker logs frigate` mentioning drops, errors, or detector issues
+- Output from `df -h` and the last fifty to one hundred lines of `sudo docker logs frigate` mentioning drops, errors, or detector issues
 - Any recent changes (cameras added, config edits, bitrate changes)
 
 The more context you provide, the faster we can pinpoint the issue. If your system is still within its warranty period, check your purchase documentation for what coverage applies.

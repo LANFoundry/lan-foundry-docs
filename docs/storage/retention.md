@@ -66,7 +66,7 @@ Frigate buffers new segments in cache first. Segments are moved to the recording
 ## Find your config file
 
 ```bash
-docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}'
+sudo docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}'
 ```
 
 Open `config.yml` in that directory. The `record:` block is usually near the top of the file, above individual `cameras:` entries.
@@ -382,13 +382,13 @@ Retention supports **decimals** if you need a partial day (for example `0.5`).
 ### Step 3 — Restart Frigate
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 If Frigate fails to start, check for YAML errors:
 
 ```bash
-docker logs frigate --tail 50
+sudo docker logs frigate --tail 50
 ```
 
 Restore from backup if needed. See [Restoring from a backup](../maintenance/restore.md).
@@ -448,7 +448,7 @@ On a stock Argus system at or below tier max cameras:
 
 - The Frigate timeline reaches back about **30 days** on each camera with continuous recording enabled
 - Pool usage stays below the danger zone without manual retention edits
-- `docker logs frigate` does not repeat "no space left on device"
+- `sudo docker logs frigate` does not repeat "no space left on device"
 
 After you **extend** event retention (alerts, motion, or detections beyond 30 days):
 
@@ -461,7 +461,7 @@ After you **shorten** retention manually:
 - The Frigate timeline still plays recent footage normally
 - Older dates roll off the timeline as segments expire (expected)
 - `df -h` shows pool usage trending down within a few cleanup cycles when you shortened retention
-- `docker logs frigate` does not repeat "no space left on device"
+- `sudo docker logs frigate` does not repeat "no space left on device"
 
 If footage vanishes **sooner** than your configured days, check whether recording was disabled on that camera, whether you are above tier capacity, or whether emergency deletion ran during a full pool.
 

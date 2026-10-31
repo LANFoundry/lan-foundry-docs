@@ -55,7 +55,7 @@ Your `config.yml` lives under `/config`. The **database** that indexes recording
 ### Find the host paths on your NVR
 
 ```bash
-docker inspect frigate --format '{{ range .Mounts }}{{ .Source }} -> {{ .Destination }}{{ "\n" }}{{ end }}'
+sudo docker inspect frigate --format '{{ range .Mounts }}{{ .Source }} -> {{ .Destination }}{{ "\n" }}{{ end }}'
 ```
 
 Look for:
@@ -140,7 +140,7 @@ Identify the filesystem that matches your `/media/frigate` host mount. Plan to a
 Quick check from Frigate logs if you suspect write failures:
 
 ```bash
-docker logs frigate --tail 50 | grep -i "space\|record\|disk"
+sudo docker logs frigate --tail 50 | grep -i "space\|record\|disk"
 ```
 
 `zpool status` reports drive and pool health, beyond available capacity. See [Drive and pool errors](../troubleshooting/drive-errors.md).

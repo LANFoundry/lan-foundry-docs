@@ -79,7 +79,7 @@ After the NVR returns:
 2. Confirm containers are running:
 
 ```bash
-docker ps
+sudo docker ps
 ```
 
 3. Open `https://frigate.internal` and spot-check cameras.

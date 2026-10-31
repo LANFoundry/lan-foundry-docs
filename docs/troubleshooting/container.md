@@ -41,7 +41,7 @@ Start by seeing which containers are actually running.
 SSH into the NVR and run:
 
 ```bash
-docker ps -a
+sudo docker ps -a
 ```
 
 The **STATUS** column tells you what each container is doing:
@@ -54,7 +54,7 @@ The **STATUS** column tells you what each container is doing:
 Running containers only:
 
 ```bash
-docker ps
+sudo docker ps
 ```
 
 If a container you expect to see is missing from the list entirely, it may have been removed. You'll need to recreate it using the setup commands from the [Caddy guide](../network/caddy-reverse-proxy.md) or your Frigate installation steps.
@@ -79,19 +79,19 @@ Logs almost always tell you why a container failed. Check them before restarting
 Replace `frigate` with the container name you're troubleshooting:
 
 ```bash
-docker logs frigate --tail 100
+sudo docker logs frigate --tail 100
 ```
 
 For a container stuck in a restart loop, the most recent crash is at the bottom:
 
 ```bash
-docker logs frigate --tail 50
+sudo docker logs frigate --tail 50
 ```
 
 To watch logs live as the container tries to start:
 
 ```bash
-docker logs frigate -f
+sudo docker logs frigate -f
 ```
 
 Press `Ctrl+C` to stop following.
@@ -113,13 +113,13 @@ Work through the sections below based on what you see in the logs.
 **Frigate:** A typo or indentation error in `config.yml` will prevent Frigate from starting. The log usually points to the line number. Fix the file on the NVR, then restart the container:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 **Caddy:** A syntax error in the Caddyfile prevents Caddy from starting. Check the file on the host: `/opt/lanfoundry/config/caddy/Caddyfile` on Argus systems, or wherever you mounted it on your own hardware. Fix the error, then restart:
 
 ```bash
-docker restart caddy
+sudo docker restart caddy
 ```
 
 If you're not sure what changed, compare your Caddyfile against the working example in the [Caddy guide](../network/caddy-reverse-proxy.md).
@@ -135,14 +135,14 @@ Caddy reaches Frigate and Arcane by container name on the shared Docker network.
 Check which containers are on the network:
 
 ```bash
-docker network inspect nvr-network
+sudo docker network inspect nvr-network
 ```
 
 Connect a missing container and restart Caddy:
 
 ```bash
-docker network connect nvr-network frigate
-docker restart caddy
+sudo docker network connect nvr-network frigate
+sudo docker restart caddy
 ```
 
 Replace `frigate` with `arcane` if that's the missing container.
@@ -162,7 +162,7 @@ sudo ss -tlnp | grep ':443'
 If an old or duplicate container is holding the port, stop it:
 
 ```bash
-docker stop <container-name-or-id>
+sudo docker stop <container-name-or-id>
 ```
 
 Then start the correct container again.
@@ -188,7 +188,7 @@ Frigate needs read/write access to the directories where recordings and configur
 List mounted volumes for a container:
 
 ```bash
-docker inspect frigate --format '{{ json .Mounts }}'
+sudo docker inspect frigate --format '{{ json .Mounts }}'
 ```
 
 Fix ownership on the host if needed (adjust the path to match your setup):
@@ -208,8 +208,8 @@ Start by checking the logs for the new version. Image updates occasionally chang
 If you need to roll back, restart using the previous image tag if you know it:
 
 ```bash
-docker stop frigate
-docker run ... ghcr.io/blakeblackshear/frigate:0.14.1
+sudo docker stop frigate
+sudo docker run ... ghcr.io/blakeblackshear/frigate:0.14.1
 ```
 
 Use the exact `docker run` command or Arcane project compose file you originally deployed with, changing only the image tag. If you're not sure what changed, restoring from a configuration backup is safer than guessing.
@@ -223,7 +223,7 @@ Once you've identified and fixed the underlying issue, restart the container.
 ### From the command line
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 Replace `frigate` with `caddy` or `arcane` as needed.
@@ -231,8 +231,8 @@ Replace `frigate` with `caddy` or `arcane` as needed.
 To stop and start separately:
 
 ```bash
-docker stop frigate
-docker start frigate
+sudo docker stop frigate
+sudo docker start frigate
 ```
 
 ### From Arcane
@@ -244,7 +244,7 @@ Click the container name, then click **Restart**. If the container is stopped, c
 Wait thirty seconds, then confirm the container is still running:
 
 ```bash
-docker ps
+sudo docker ps
 ```
 
 If the status shows **Restarting** or **Exited** again, go back to the logs. The fix didn't hold and there's another error to address.
@@ -273,8 +273,8 @@ Sometimes a container needs to be removed and recreated rather than restarted. T
 Remove and recreate (example for Caddy):
 
 ```bash
-docker stop caddy
-docker rm caddy
+sudo docker stop caddy
+sudo docker rm caddy
 ```
 
 Then run the full `docker run` command from the [Caddy guide](../network/caddy-reverse-proxy.md). Do not run `docker volume rm` unless you intentionally want to wipe stored data.
@@ -285,7 +285,7 @@ In Arcane, how you recreate depends on what changed. If you changed port mapping
 
 ## If Docker itself isn't running
 
-If `docker ps` returns an error like "Cannot connect to the Docker daemon", Docker isn't running on the host.
+If `sudo docker ps` returns an error like "Cannot connect to the Docker daemon", Docker isn't running on the host.
 
 Check the service status:
 
@@ -339,12 +339,12 @@ If Cockpit is running but Caddy can't reach it, the issue is usually on the Cadd
 
 | Symptom | First check | Likely fix |
 |---|---|---|
-| Container shows **Exited** | `docker logs <name> --tail 50` | Fix config error, restart |
+| Container shows **Exited** | `sudo docker logs <name> --tail 50` | Fix config error, restart |
 | Container shows **Restarting** | Logs from the most recent crash | Config syntax, missing volume, out of disk |
-| Caddy log: `lookup frigate: no such host` | `docker network inspect nvr-network` | Connect container to network, restart Caddy |
+| Caddy log: `lookup frigate: no such host` | `sudo docker network inspect nvr-network` | Connect container to network, restart Caddy |
 | `bind: address already in use` | `sudo ss -tlnp \| grep :<port>` | Stop duplicate container |
 | `no space left on device` | `df -h` | Free disk space, adjust retention |
-| `docker ps` fails entirely | `sudo systemctl status docker` | Start Docker service |
+| `sudo docker ps` fails entirely | `sudo systemctl status docker` | Start Docker service |
 | Cockpit unreachable | `sudo systemctl status cockpit` | Start Cockpit service |
 | Worked until an update | Logs after the update | Roll back image tag or fix new config requirement |
 

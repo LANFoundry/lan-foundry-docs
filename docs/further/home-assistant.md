@@ -68,7 +68,7 @@ A few notes on this configuration:
 
 ```bash
 sudo mkdir -p /opt/homeassistant/config
-docker compose up -d homeassistant
+sudo docker compose up -d homeassistant
 ```
 
 Home Assistant will download and start. The first boot takes a couple of minutes as it initializes the config directory.
@@ -97,13 +97,13 @@ sudo reboot
 After it comes back, check:
 
 ```bash
-docker ps | grep homeassistant
+sudo docker ps | grep homeassistant
 ```
 
 The container should show a status of `Up`. If it doesn't start, check:
 
 ```bash
-docker logs homeassistant --tail 30
+sudo docker logs homeassistant --tail 30
 ```
 
 ---
@@ -113,8 +113,8 @@ docker logs homeassistant --tail 30
 Home Assistant releases updates frequently. To update:
 
 ```bash
-docker compose pull homeassistant
-docker compose up -d homeassistant
+sudo docker compose pull homeassistant
+sudo docker compose up -d homeassistant
 ```
 
 This pulls the latest `stable` image and restarts the container with it. Your configuration persists in the volume. Back up your config before major updates:

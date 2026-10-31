@@ -81,8 +81,8 @@ Wait for the container to return to **running** status.
 Check logs if anything looks wrong:
 
 ```bash
-docker logs frigate --tail 50
-docker logs caddy --tail 50
+sudo docker logs frigate --tail 50
+sudo docker logs caddy --tail 50
 ```
 
 ---
@@ -93,13 +93,13 @@ If Arcane is down, use SSH. Each project is a folder under `/opt/lanfoundry/stac
 
 ```bash
 cd /opt/lanfoundry/stacks/<project-name>
-docker compose pull
-docker compose up -d
+sudo docker compose pull
+sudo docker compose up -d
 ```
 
-`docker compose up -d` recreates only the containers whose image changed, keeping the same volume mounts and network settings from the compose file.
+`sudo docker compose up -d` recreates only the containers whose image changed, keeping the same volume mounts and network settings from the compose file.
 
-For Frigate, a simple `docker restart` does **not** switch to a newly pulled image. The container has to be recreated, which `docker compose up -d` or Arcane's **Redeploy** does for you.
+For Frigate, a simple `docker restart` does **not** switch to a newly pulled image. The container has to be recreated, which `sudo docker compose up -d` or Arcane's **Redeploy** does for you.
 
 ---
 
@@ -108,7 +108,7 @@ For Frigate, a simple `docker restart` does **not** switch to a newly pulled ima
 Frigate release notes occasionally mention configuration changes. After a Frigate update:
 
 - Open the Frigate UI and confirm all cameras still stream
-- Watch `docker logs frigate --tail 100` for deprecation warnings
+- Watch `sudo docker logs frigate --tail 100` for deprecation warnings
 - Test motion detection or a notification if you rely on them
 
 If the container exits immediately, the log usually points to a config key that changed between versions. Restore your backup config if needed, then adjust settings using the current [Frigate documentation](https://docs.frigate.video/).
@@ -121,7 +121,7 @@ If the container exits immediately, the log usually points to a config key that 
 2. **Caddy** — reverse proxy; verify all hostnames
 3. **Arcane** — management UI last
 
-Skipping straight to a full `docker compose pull` on everything at once makes it harder to tell which update caused a problem.
+Skipping straight to a full `sudo docker compose pull` on everything at once makes it harder to tell which update caused a problem.
 
 ---
 

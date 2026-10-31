@@ -15,13 +15,13 @@ This guide assumes:
 Changes in this guide take effect after restarting Frigate:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 Check logs after any restart to confirm there are no YAML errors:
 
 ```bash
-docker logs frigate --tail 30
+sudo docker logs frigate --tail 30
 ```
 
 ---

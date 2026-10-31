@@ -34,10 +34,10 @@ Download ntfy from the App Store. Search for **ntfy** by Philipp Heckel, or use 
 
 ntfy is available from two sources:
 
-- **Google Play** — standard install, uses Google's push infrastructure (FCM) for delivery
-- **F-Droid** — open-source app store, no Google services required. Required if you want fully local delivery via UnifiedPush (covered in [Step 4](#step-4-android-fully-local-delivery-with-unifiedpush))
+- **Google Play** — standard install. Connects directly to your NVR. For topics on ntfy.sh, it receives alerts through Google's push service (FCM)
+- **F-Droid** — open-source app store version with no Google services. It always connects directly to whichever server you subscribe on
 
-If you're not sure which to use, the Play Store version works well for most people. You can switch to F-Droid later if you want to eliminate the Google FCM dependency.
+The difference only matters if you publish alerts through ntfy.sh. See [Step 4](#step-4-android-play-store-vs-f-droid). If you're not sure, the Play Store version works well for most people.
 
 ---
 
@@ -74,30 +74,36 @@ Walk in front of a camera to trigger a detection. A notification should arrive o
 
 ---
 
-## Step 4 — Android: fully local delivery with UnifiedPush
+## Step 4 — Android: Play Store vs F-Droid
 
-This step is optional and Android-only. If you're on iOS, skip ahead to the note below.
+This step is Android-only. If you're on iOS, skip ahead to the next section.
 
-By default, the Android ntfy app (Play Store version) uses Google's FCM service to deliver notifications — your notification text passes through Google's servers before reaching your phone. UnifiedPush is an open standard that routes push through your own ntfy server instead, keeping everything on your local network.
+Android apps usually receive push notifications through Google's Firebase Cloud Messaging (FCM). An app server hands the alert to Google, and Google delivers it over the one connection your phone keeps open to Google. The alternative is for the app to keep its own direct connection to its server, which costs a little more battery. Which one the ntfy app uses depends on the app version and where you subscribed:
 
-To use UnifiedPush:
+| Subscribed on | Google Play version | F-Droid version |
+|---|---|---|
+| Your NVR (`ntfy.internal`) | Direct connection to your NVR | Direct connection to your NVR |
+| ntfy.sh ([remote option](ntfy-setup.md#option-a-publish-alerts-through-ntfysh)) | Through Google's FCM | Direct connection to ntfy.sh |
 
-1. **Uninstall the Play Store version** of ntfy if you have it installed.
-2. Install **ntfy from F-Droid**. If you don't have F-Droid, download it from [f-droid.org](https://f-droid.org).
-3. Open the ntfy app, add your server and topic as in Steps 2 and 3.
-4. ntfy automatically registers as a UnifiedPush distributor — no additional configuration is needed.
+If your phone is subscribed on your NVR, either version keeps Google out of the path. If you publish alerts through ntfy.sh and want Google out of the path as well, install ntfy from [F-Droid](https://f-droid.org) instead of the Play Store, then add your server and topic as in Steps 2 and 3.
 
-With this setup, notifications are delivered entirely within your network. No Google infrastructure is involved.
+With a direct connection, Android shows a permanent "ntfy is running" notification. That's normal, and it's what keeps the connection alive.
 
 ---
 
 ## iOS and push delivery
 
-iOS does not support UnifiedPush. Apple requires all push notifications to pass through Apple's servers (APNs), and there is no way around this on iOS.
+iOS doesn't let apps keep their own background connection the way Android does. Every push notification has to come through Apple's servers (APNs), and there is no way around this on iOS.
 
-When the ntfy iOS app subscribes to your self-hosted server, it connects through ntfy.sh's relay service to reach APNs. This means the notification text — camera name, event type — passes through ntfy's servers on the way to your iPhone. Your camera footage stays on your NVR; only the metadata in the alert itself transits ntfy's infrastructure.
+When the ntfy iOS app subscribes to your self-hosted server, it relies on ntfy.sh to wake it up through APNs. Your NVR's ntfy needs `upstream-base-url: "https://ntfy.sh"` in its `server.yml` for this (see the [iPhone note in Setting up push notifications](ntfy-setup.md#option-b-wireguard-or-tailscale)). Only a message ID passes through ntfy.sh. The iPhone then downloads the alert text and snapshot directly from your NVR, so it has to be on your home network or connected over a VPN.
 
 This is an Apple platform constraint, not something specific to ntfy or LAN Foundry's setup. It applies to every self-hosted push notification solution on iOS.
+
+---
+
+## Getting alerts away from home
+
+A subscription on `ntfy.internal` only works while your phone can reach the NVR, at home or over a VPN. To get alerts anywhere without a VPN, have frigate-notify publish to ntfy.sh and subscribe to your topic there instead. See [Option A in Setting up push notifications](ntfy-setup.md#option-a-publish-alerts-through-ntfysh).
 
 ---
 

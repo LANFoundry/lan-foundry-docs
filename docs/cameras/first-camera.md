@@ -154,7 +154,7 @@ When everything is working:
 
 - The camera tile in Frigate updates smoothly with a few seconds of delay at most
 - Recordings and events accumulate on the timeline
-- `docker logs frigate` does not spam connection errors for that camera
+- `sudo docker logs frigate` does not spam connection errors for that camera
 
 Some buffering right after a restart is normal. Persistent "Unable to connect" messages are not.
 
@@ -167,7 +167,7 @@ If you prefer to manage Frigate's camera configuration as a file — for version
 On a standard Docker install, `config.yml` lives on the NVR host in the directory mounted into the container at `/config`. If you're unsure of the path:
 
 ```bash
-docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}'
+sudo docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}'
 ```
 
 Open `config.yml` in that folder with a text editor. YAML is indentation-sensitive. Use spaces, not tabs, and align nested lines exactly as in the examples below.
@@ -245,13 +245,13 @@ Replace `front_door` with a short name and update the password and IP address.
 Restart Frigate to load the updated config:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 If Frigate fails to start, check the logs for YAML errors:
 
 ```bash
-docker logs frigate --tail 50
+sudo docker logs frigate --tail 50
 ```
 
 See [What to do when a container won't start](../troubleshooting/container.md) if the container won't stay running.

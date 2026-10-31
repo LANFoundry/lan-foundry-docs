@@ -231,7 +231,7 @@ Storage trouble often shows up in Frigate before `zpool status` reports a fault.
 **Check Frigate logs:**
 
 ```bash
-docker logs frigate --tail 100
+sudo docker logs frigate --tail 100
 ```
 
 Look for messages mentioning **no space**, **I/O error**, **read-only filesystem**, or **failed to write**. A full pool produces different messages than a dying drive, but both need prompt action.
@@ -362,7 +362,7 @@ Use this when a pool drive health is **FAILED**, uncorrectable errors are presen
 | Pool DEGRADED | `zpool status` | [Replace failed HDD](../storage/adding-storage.md#scenario-1-replace-a-failed-or-failing-drive), allow resilver |
 | Pool state FAULTED | `zpool status` | Contact support; do not experiment |
 | CKSUM errors on a drive | `zpool status` | Failing member; check SMART, replace drive |
-| Frigate write errors, space available | `docker logs frigate` | Failing pool member; check SMART |
+| Frigate write errors, space available | `sudo docker logs frigate` | Failing pool member; check SMART |
 | Pool drive missing | `zpool status`, `dmesg` | Reseat drive, replace if still missing |
 | Clicking or grinding | Physical inspection | Replace HDD, resilver pool |
 | NVR won't boot | `lsblk`, boot NVMe SMART | Boot drive recovery, not pool repair |
@@ -396,7 +396,7 @@ The guides on this site are free for everyone, whether you bought hardware from 
 
 **If you're running your own hardware**
 
-Community forums for your drive manufacturer, the OpenZFS project, and the Frigate project are good resources. Include `zpool status`, `smartctl --all` output for the affected drive, `df -h`, and the last fifty lines of `docker logs frigate` that mention storage or I/O.
+Community forums for your drive manufacturer, the OpenZFS project, and the Frigate project are good resources. Include `zpool status`, `smartctl --all` output for the affected drive, `df -h`, and the last fifty lines of `sudo docker logs frigate` that mention storage or I/O.
 
 **If you purchased an Argus system from LAN Foundry**
 
@@ -409,6 +409,6 @@ When you open a support request, include:
 - `sudo smartctl --all /dev/sdX` for any flagged pool drive (adjust device name)
 - Whether the boot M.2 is involved (NVR won't boot) or only a pool HDD
 - When the warning or symptom started, and whether there was a power outage or move recently
-- Whether Frigate is still recording, and any relevant lines from `docker logs frigate --tail 50`
+- Whether Frigate is still recording, and any relevant lines from `sudo docker logs frigate --tail 50`
 
 The more context you provide, the faster we can pinpoint the issue. If your system is still within its warranty period, check your purchase documentation for what coverage applies.

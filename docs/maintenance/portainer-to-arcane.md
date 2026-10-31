@@ -72,7 +72,7 @@ Repeat for every stack. Use the stack name as the folder name, since Arcane name
 **Check relative paths.** Portainer runs compose from inside its own data folder, so a bind mount like `./config:/config` in a Portainer stack points somewhere inside Portainer's volume. Replace relative paths with the absolute host paths your data actually lives at (for example `/opt/lanfoundry/config/frigate:/config`). If you're unsure where a mount points, check the running container:
 
 ```bash
-docker inspect frigate --format '{{ range .Mounts }}{{ .Source }} -> {{ .Destination }}{{ "\n" }}{{ end }}'
+sudo docker inspect frigate --format '{{ range .Mounts }}{{ .Source }} -> {{ .Destination }}{{ "\n" }}{{ end }}'
 ```
 
 If you ran any containers with `docker run` instead of a stack, write a compose file for each one using the same image, ports, volumes, and network settings. Portainer's container detail page shows the current settings.
@@ -96,13 +96,13 @@ sudo mkdir -p /opt/lanfoundry/stacks/arcane
 sudo nano /opt/lanfoundry/stacks/arcane/compose.yaml
 ```
 
-Paste the compose service from [About the stack](../about-the-stack.md#arcane-container-management), with your key in place of the `ENCRYPTION_KEY` placeholder. If your `nvr-network` doesn't exist yet, create it with `docker network create nvr-network` first. If your Portainer setup used a different network name, use that name instead.
+Paste the compose service from [About the stack](../about-the-stack.md#arcane-container-management), with your key in place of the `ENCRYPTION_KEY` placeholder. If your `nvr-network` doesn't exist yet, create it with `sudo docker network create nvr-network` first. If your Portainer setup used a different network name, use that name instead.
 
 Start it:
 
 ```bash
 cd /opt/lanfoundry/stacks/arcane
-docker compose up -d
+sudo docker compose up -d
 ```
 
 Browse to `http://<NVR IP>:3552` and sign in with username `arcane` and password `arcane-admin`. Arcane asks you to set a new password right away.
@@ -124,7 +124,7 @@ For each stack:
 If **Up** fails with an error that a container name is already in use, Portainer left the stopped container behind. Remove it and try again:
 
 ```bash
-docker rm frigate
+sudo docker rm frigate
 ```
 
 `docker rm` removes the container only. Named volumes and bind-mounted folders stay in place. Don't add `-v` and don't run `docker volume rm`.
@@ -149,7 +149,7 @@ Arcane serves plain HTTP on its backend, so it doesn't need the `tls_insecure_sk
 Then restart Caddy:
 
 ```bash
-docker restart caddy
+sudo docker restart caddy
 ```
 
 In OPNsense, edit the Portainer host override under **Services**, then **Unbound DNS**, then **Overrides**: change **Host** to `arcane` and the description to `Arcane via Caddy`. Save and apply. If you use a different DNS server or a hosts file, make the same change there.
@@ -163,13 +163,13 @@ Browse to `https://arcane.internal` to confirm.
 Once every service is running from Arcane and you've been able to reach them all for a day or so, remove Portainer:
 
 ```bash
-docker rm -f portainer
+sudo docker rm -f portainer
 ```
 
 Its data volume still holds the original stack files. Keep it until you're confident you don't need them, then remove it:
 
 ```bash
-docker volume rm portainer_data
+sudo docker volume rm portainer_data
 ```
 
 ---

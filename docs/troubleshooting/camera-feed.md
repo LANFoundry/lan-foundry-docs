@@ -66,13 +66,13 @@ Before changing configuration, see what Frigate is reporting about the camera.
 On the NVR:
 
 ```bash
-docker logs frigate --tail 100
+sudo docker logs frigate --tail 100
 ```
 
 To watch logs live while you reload the Frigate page:
 
 ```bash
-docker logs frigate -f
+sudo docker logs frigate -f
 ```
 
 Press `Ctrl+C` to stop following.
@@ -165,7 +165,7 @@ When a camera moves from the main LAN to the camera VLAN, it gets a new IP addre
 In OPNsense, open **Services**, then **Dnsmasq DNS & DHCP**, then **Leases**. Find the camera's lease in your camera VLAN's range and note its current IP. If it's different from what's in your Frigate config, update `config.yml` with the new address and restart Frigate:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 To prevent this from happening again, assign a static DHCP reservation for the camera in OPNsense so its IP doesn't change on lease renewal. See [Placing cameras on the camera VLAN](../cameras/vlan-placement.md#step-3-assign-a-static-dhcp-reservation) for how to do that.
@@ -199,7 +199,7 @@ These all run over SSH on the NVR and work with the standard VLAN firewall rules
 - Ping the camera to confirm network connectivity
 - Test RTSP port 554 with `nc -zv`
 - Test the stream with `ffprobe`
-- Read Frigate logs with `docker logs frigate`
+- Read Frigate logs with `sudo docker logs frigate`
 
 For many problems, that's enough. You don't need the camera web interface at all.
 
@@ -251,7 +251,7 @@ Special characters in passwords can break RTSP URLs. If your password contains `
 After updating credentials in `config.yml`, restart Frigate:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 ---
@@ -350,8 +350,8 @@ Or add `-rtsp_transport tcp` via go2rtc stream configuration depending on your F
 After any config change, restart Frigate and check the logs again:
 
 ```bash
-docker restart frigate
-docker logs frigate --tail 50
+sudo docker restart frigate
+sudo docker logs frigate --tail 50
 ```
 
 ---
@@ -364,7 +364,7 @@ docker logs frigate --tail 50
 | `401` in Frigate logs | Credentials in config vs. camera | Correct username/password in stream URL |
 | `404` or DESCRIBE failed in logs | `ffprobe` from NVR over SSH | Fix stream path for camera brand |
 | Connection timed out | OPNsense firewall logs | Fix VLAN allow rules for NVR → camera |
-| Worked until config edit | `docker logs frigate` | Revert recent config.yml change |
+| Worked until config edit | `sudo docker logs frigate` | Revert recent config.yml change |
 | One of several cameras fails | Compare working vs. broken config | Fix IP, URL, or credentials for that camera |
 | Feed frozen or delayed | CPU usage, stream resolution | Use sub stream for detect, reduce resolution |
 
@@ -395,7 +395,7 @@ The guides on this site are free for everyone, whether you bought hardware from 
 
 **If you're running your own hardware**
 
-Community forums for Frigate and your camera manufacturer are your best bet for RTSP URL and codec questions we don't cover here. Bring the output from `docker logs frigate --tail 100` and the RTSP URL you're using (redact your password).
+Community forums for Frigate and your camera manufacturer are your best bet for RTSP URL and codec questions we don't cover here. Bring the output from `sudo docker logs frigate --tail 100` and the RTSP URL you're using (redact your password).
 
 **If you purchased an Argus system from LAN Foundry**
 
@@ -407,7 +407,7 @@ When you open a support request, include:
 - The camera's IP address and which VLAN it's on
 - Whether the NVR can ping the camera
 - The RTSP URL from your Frigate config (redact the password)
-- The last fifty to one hundred lines from `docker logs frigate` showing errors for that camera
+- The last fifty to one hundred lines from `sudo docker logs frigate` showing errors for that camera
 - Any recent changes to network, VLAN, or Frigate configuration
 
 The more context you provide, the faster we can pinpoint the issue. If your system is still within its warranty period, check your purchase documentation for what coverage applies.

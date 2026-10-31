@@ -198,7 +198,7 @@ If this fails, the NVR may be powered off, disconnected from the network, or ass
 SSH into the NVR or connect a keyboard and monitor, then check that the containers are up:
 
 ```bash
-docker ps
+sudo docker ps
 ```
 
 You should see `caddy`, `frigate`, `arcane`, `ntfy`, and `dozzle` in the list with a status of **Up**. If Caddy isn't running, nothing will respond on port 443 regardless of DNS.
@@ -231,7 +231,7 @@ If the hostname resolves, the NVR responds to ping, but browsing to `https://fri
 On the NVR:
 
 ```bash
-docker logs caddy --tail 50
+sudo docker logs caddy --tail 50
 ```
 
 Common log messages and what they mean:
@@ -241,8 +241,8 @@ Common log messages and what they mean:
 The Frigate container isn't on the `nvr-network` Docker network. Connect it and restart Caddy:
 
 ```bash
-docker network connect nvr-network frigate
-docker restart caddy
+sudo docker network connect nvr-network frigate
+sudo docker restart caddy
 ```
 
 Do the same for Arcane if you see a similar error for `arcane`.
@@ -260,14 +260,14 @@ The hostname in your browser doesn't match the Caddyfile. Confirm the Caddyfile 
 On the NVR:
 
 ```bash
-docker network inspect nvr-network
+sudo docker network inspect nvr-network
 ```
 
 The output should list `caddy`, `frigate`, `arcane`, `ntfy`, and `dozzle` among the connected containers. If any are missing:
 
 ```bash
-docker network connect nvr-network <container-name>
-docker restart caddy
+sudo docker network connect nvr-network <container-name>
+sudo docker restart caddy
 ```
 
 ### Confirm Caddy is listening on ports 80 and 443
@@ -276,7 +276,7 @@ docker restart caddy
 sudo ss -tlnp | grep -E ':80|:443'
 ```
 
-You should see Caddy bound to both ports. If another process is using them, Caddy may have failed to start properly. Check `docker logs caddy` for bind errors.
+You should see Caddy bound to both ports. If another process is using them, Caddy may have failed to start properly. Check `sudo docker logs caddy` for bind errors.
 
 ---
 
@@ -303,8 +303,8 @@ A certificate warning means DNS and Caddy are both working. You're done troubles
 | Hostname not found | `nslookup frigate.internal` | DNS entries in OPNsense, device DNS settings |
 | Works in nslookup, not in browser (Windows) | `Resolve-DnsName frigate.internal` | Hosts file, disable DoH in browser, see [Windows section](#windows-dns-troubleshooting) |
 | Resolves but times out | `ping 192.168.1.100` | NVR offline, wrong IP, firewall rule |
-| Resolves but connection refused | `docker ps`, `docker logs caddy` | Start Caddy, fix Docker network |
-| One service works, another doesn't | `docker logs caddy` | Connect missing container to `nvr-network` |
+| Resolves but connection refused | `sudo docker ps`, `sudo docker logs caddy` | Start Caddy, fix Docker network |
+| One service works, another doesn't | `sudo docker logs caddy` | Connect missing container to `nvr-network` |
 | Certificate warning, then page loads | n/a | Expected. Click through or install Caddy root cert |
 | Works on phone, not Windows PC | Device DNS settings | Hosts file or Windows resolver fixes above |
 
@@ -352,6 +352,6 @@ When you open a support request, include:
 - The output of `nslookup` for the failing hostname, and `Resolve-DnsName` if you're on Windows
 - Whether the issue affects all devices on your network or just one
 - Whether you can reach the service directly by IP and port (for example, `http://192.168.1.100:5000` for Frigate)
-- The last thirty to fifty lines from `docker logs caddy` if the hostname resolves but the page won't load
+- The last thirty to fifty lines from `sudo docker logs caddy` if the hostname resolves but the page won't load
 
 The more context you provide, the faster we can pinpoint the issue. If your system is still within its warranty period, check your purchase documentation for what coverage applies.

@@ -84,12 +84,12 @@ Your NVR services (Frigate, Caddy, Arcane) run as Docker containers. The host ru
 
 | Task | Command |
 |---|---|
-| Running containers | `docker ps` |
-| All containers including stopped | `docker ps -a` |
-| Logs for a container | `docker logs frigate --tail 100` |
-| Follow logs live | `docker logs frigate -f` |
-| Restart a container | `docker restart frigate` |
-| Container mount paths | `docker inspect frigate --format '{{ json .Mounts }}'` |
+| Running containers | `sudo docker ps` |
+| All containers including stopped | `sudo docker ps -a` |
+| Logs for a container | `sudo docker logs frigate --tail 100` |
+| Follow logs live | `sudo docker logs frigate -f` |
+| Restart a container | `sudo docker restart frigate` |
+| Container mount paths | `sudo docker inspect frigate --format '{{ json .Mounts }}'` |
 
 For container startup failures, configuration errors, and network issues between Caddy and Frigate, use [What to do when a container won't start](container.md) first.
 
@@ -179,8 +179,8 @@ Whether you post in a community forum or open a LAN Foundry support ticket, diag
 
 **Container problems**
 
-- `docker ps -a`
-- `docker logs <container> --tail 100`
+- `sudo docker ps -a`
+- `sudo docker logs <container> --tail 100`
 
 **Storage problems**
 
@@ -191,7 +191,7 @@ Whether you post in a community forum or open a LAN Foundry support ticket, diag
 **Camera or Frigate problems**
 
 - Relevant `config.yml` camera block (redact passwords and tokens)
-- `docker logs frigate --tail 100`
+- `sudo docker logs frigate --tail 100`
 - Result of `ffprobe` or `ping` from the NVR to the camera IP
 
 **Network problems**

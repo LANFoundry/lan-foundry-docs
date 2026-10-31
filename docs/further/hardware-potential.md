@@ -29,7 +29,7 @@ A rough sense of what each tier can comfortably carry:
 Watch resource usage after adding anything new:
 
 ```bash
-docker stats
+sudo docker stats
 htop
 ```
 

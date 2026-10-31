@@ -95,7 +95,7 @@ After setup:
 - Detection sensors update in near-real-time as Frigate processes frames
 - Any automations you've built fire when their trigger conditions are met
 
-If the integration shows as unavailable, confirm Frigate is running (`docker ps | grep frigate`) and that Home Assistant can reach the NVR's IP on port 5000.
+If the integration shows as unavailable, confirm Frigate is running (`sudo docker ps | grep frigate`) and that Home Assistant can reach the NVR's IP on port 5000.
 
 ---
 

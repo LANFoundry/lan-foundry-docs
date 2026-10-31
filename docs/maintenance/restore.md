@@ -38,7 +38,7 @@ When in doubt, restore `config.yml` first. It is the most common fix.
 Restoring while Frigate is writing to `config.yml` can cause conflicts. Stop the container:
 
 ```bash
-docker stop frigate
+sudo docker stop frigate
 ```
 
 If Frigate is already stopped or crash-looping, skip this step.
@@ -48,7 +48,7 @@ If Frigate is already stopped or crash-looping, skip this step.
 ## Step 2 — Locate the live config path
 
 ```bash
-FRIGATE_CONFIG=$(docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}')
+FRIGATE_CONFIG=$(sudo docker inspect frigate --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}')
 echo "$FRIGATE_CONFIG"
 ```
 
@@ -89,9 +89,9 @@ cp ~/config.yml.restore "$FRIGATE_CONFIG/config.yml"
 ### Restore Caddyfile (if needed)
 
 ```bash
-CADDYFILE=$(docker inspect caddy --format '{{ range .Mounts }}{{ if eq .Destination "/etc/caddy/Caddyfile" }}{{ .Source }}{{ end }}{{ end }}')
+CADDYFILE=$(sudo docker inspect caddy --format '{{ range .Mounts }}{{ if eq .Destination "/etc/caddy/Caddyfile" }}{{ .Source }}{{ end }}{{ end }}')
 cp ~/nvr-backups/2026-06-15/Caddyfile "$CADDYFILE"
-docker restart caddy
+sudo docker restart caddy
 ```
 
 ---
@@ -99,8 +99,8 @@ docker restart caddy
 ## Step 5 — Start Frigate and verify
 
 ```bash
-docker start frigate
-docker logs frigate --tail 50
+sudo docker start frigate
+sudo docker logs frigate --tail 50
 ```
 
 Look for a clean startup without YAML parse errors. Open `https://frigate.internal` and confirm:
@@ -117,7 +117,7 @@ If Frigate still fails, read the log line that mentions the error. You may have 
 
 If an update removed volume mounts or recreated the container with empty config:
 
-1. Confirm where the **old** config still lives. Bind mounts often remain on the host even when the container was recreated. Check the path from `docker inspect frigate`.
+1. Confirm where the **old** config still lives. Bind mounts often remain on the host even when the container was recreated. Check the path from `sudo docker inspect frigate`.
 2. If the host path was wiped, copy `config.yml` from your off-NVR backup into the mount path from Step 2.
 3. Recreate the container using the same volumes and network as before. See [Updating containers](container-updates.md) and [What to do when a container won't start](../troubleshooting/container.md).
 

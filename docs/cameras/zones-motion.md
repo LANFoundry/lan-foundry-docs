@@ -200,13 +200,13 @@ This keeps 7 days of motion segments for continuous playback and 30 days of even
 After making changes in the UI or editing `config.yml` directly, restart Frigate to apply them:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 Check the logs for any configuration errors:
 
 ```bash
-docker logs frigate --tail 50
+sudo docker logs frigate --tail 50
 ```
 
 A misconfigured zone or mask shows up as a YAML parse error or a warning about an invalid coordinate. If the logs are clean, open the Frigate web interface.

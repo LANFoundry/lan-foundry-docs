@@ -144,19 +144,19 @@ On first startup, Frigate downloads the default model (YOLOv6n) from the Hailo M
 If you edited the compose file, recreate the container so the device passthrough takes effect:
 
 ```bash
-docker compose up -d frigate
+sudo docker compose up -d frigate
 ```
 
 If you only edited `config.yml`, a restart is enough:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 Check the logs for any errors:
 
 ```bash
-docker logs frigate --tail 50
+sudo docker logs frigate --tail 50
 ```
 
 If you see a warning about falling back to CPU detection, check the troubleshooting section below.
@@ -176,13 +176,13 @@ The Frigate web interface doesn't show detector inference speed, but Frigate's s
 With `jq` (`sudo apt install jq` if it isn't installed):
 
 ```bash
-docker exec frigate curl -s http://127.0.0.1:5000/api/stats | jq '.detectors'
+sudo docker exec frigate curl -s http://127.0.0.1:5000/api/stats | jq '.detectors'
 ```
 
 Without `jq`, using the Python that ships with Ubuntu:
 
 ```bash
-docker exec frigate curl -s http://127.0.0.1:5000/api/stats \
+sudo docker exec frigate curl -s http://127.0.0.1:5000/api/stats \
   | python3 -c 'import json,sys; [print(k, round(v["inference_speed"],1), "ms") for k,v in json.load(sys.stdin)["detectors"].items()]'
 ```
 
@@ -198,7 +198,7 @@ If the number is in the CPU range, Frigate is not using the accelerator. See tro
 You can also confirm from the logs:
 
 ```bash
-docker logs frigate 2>&1 | grep -i hailo
+sudo docker logs frigate 2>&1 | grep -i hailo
 ```
 
 A correctly initialized accelerator shows up in the startup output without errors.
@@ -219,7 +219,7 @@ A line showing the device being registered confirms the driver loaded. No output
 
 **Frigate falling back to CPU detection**
 
-Two common causes: the `devices:` entry is missing from the Docker compose file, or the `detectors:` block is missing or misspelled in `config.yml`. Verify both, then recreate the container with `docker compose up -d frigate`.
+Two common causes: the `devices:` entry is missing from the Docker compose file, or the `detectors:` block is missing or misspelled in `config.yml`. Verify both, then recreate the container with `sudo docker compose up -d frigate`.
 
 **Driver and runtime version mismatch**
 
@@ -240,12 +240,12 @@ Docker may not have the correct group access to the device. Restart Docker and F
 
 ```bash
 sudo systemctl restart docker
-docker restart frigate
+sudo docker restart frigate
 ```
 
 **Still not working**
 
-Reach out to LAN Foundry support at [support@lanfoundry.com](mailto:support@lanfoundry.com) with the output of `docker logs frigate --tail 100` and `dmesg | grep -i hailo`.
+Reach out to LAN Foundry support at [support@lanfoundry.com](mailto:support@lanfoundry.com) with the output of `sudo docker logs frigate --tail 100` and `dmesg | grep -i hailo`.
 
 ---
 

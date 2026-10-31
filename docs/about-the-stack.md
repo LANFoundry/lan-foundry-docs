@@ -239,6 +239,8 @@ The frigate-notify service:
         container_name: frigate-notify
         image: ghcr.io/0x2142/frigate-notify:latest
         restart: unless-stopped
+        environment:
+          - TZ=America/Chicago   # your local time zone; used for alert times and quiet hours
         networks:
           - nvr-network
         depends_on:
@@ -258,6 +260,7 @@ And its config, wired to ntfy by default:
 
     frigate:
       server: http://frigate.nvr-network:5000
+      public_url: https://frigate.internal
       ignoressl: false
       webapi:
         enabled: true
@@ -291,7 +294,7 @@ Other providers (Discord, Gotify, Pushover, Telegram, SMTP, and more) can be ena
 
 ntfy is a self-hosted push notification server. When frigate-notify sends it a notification, ntfy queues it and delivers it to subscribed devices: your phone, a browser tab, anything running the ntfy app or subscribed via the API.
 
-**Why ntfy:** It requires no account, no third-party service, and no ongoing subscription. You run it, you control it. It has well-maintained apps for iOS and Android. On Android, it supports UnifiedPush, which routes notifications entirely within your own infrastructure without passing through Google's servers. For iOS, notifications must transit Apple's servers regardless of what notification service you use, an Apple platform constraint that applies to any self-hosted push service.
+**Why ntfy:** It requires no account, no third-party service, and no ongoing subscription. You run it, you control it. It has well-maintained apps for iOS and Android. On Android, the app connects directly to your own ntfy server, so alerts never pass through Google's servers. On iOS, every push has to go through Apple's servers. ntfy keeps that to a wake-up signal, and the iPhone then fetches the alert itself from your NVR. That requirement is an Apple platform constraint that applies to any self-hosted push service.
 
 The ntfy service:
 
@@ -312,16 +315,17 @@ The ntfy service:
         command: serve
     ```
 
-And its server config — notice the upstream relay to `ntfy.sh` is disabled by default, so notifications never leave your network unless you opt in:
+And its server config. Nothing is sent to `ntfy.sh` by default, so notifications never leave your network unless you opt in. To get alerts away from home without a VPN, see [remote notifications](notifications/ntfy-setup.md#step-4-enable-remote-notifications):
 
 ??? note "ntfy's server.yml"
     ```yaml
     # ntfy server.yml
-    # Upstream relay to ntfy.sh is intentionally disabled for privacy-first
-    # operation — notifications never leave your network by default. To enable
-    # remote push later (notification text transits ntfy.sh), add:
+    # Upstream to ntfy.sh is intentionally disabled for privacy-first operation.
+    # iPhones subscribed to this server need it to get instant alerts. To enable
+    # it (only a message ID is sent to ntfy.sh, never the alert itself), add:
     #   upstream-base-url: "https://ntfy.sh"
-    # then restart the ntfy container.
+    # then restart the ntfy container. This does not deliver alerts away from
+    # home; the phone still fetches each alert from this server.
 
     base-url: https://ntfy.internal
     attachment-cache-dir: /var/cache/ntfy/attachments

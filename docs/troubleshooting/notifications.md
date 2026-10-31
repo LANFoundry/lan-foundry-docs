@@ -49,19 +49,19 @@ frigate-notify is the link most likely to be missing or misconfigured, and it's 
 Confirm it's running:
 
 ```bash
-docker ps | grep frigate-notify
+sudo docker ps | grep frigate-notify
 ```
 
 The container should appear with a status of `Up`. If it's absent or shows `Exited`, start it:
 
 ```bash
-docker restart frigate-notify
+sudo docker restart frigate-notify
 ```
 
 Then read its logs:
 
 ```bash
-docker logs frigate-notify --tail 50
+sudo docker logs frigate-notify --tail 50
 ```
 
 What to look for:
@@ -90,7 +90,7 @@ You should see ntfy enabled, the server set to the ntfy container, and your topi
 If you edit frigate-notify's `config.yml`, restart frigate-notify for the change to take effect:
 
 ```bash
-docker restart frigate-notify
+sudo docker restart frigate-notify
 ```
 
 Then walk in front of a camera and watch the logs again. A notification should appear in the ntfy web UI within 30 seconds.
@@ -119,7 +119,7 @@ attachment-file-size-limit: 15M
 If any of these lines are missing, add them with `sudo nano /opt/lanfoundry/config/ntfy/server.yml` and restart ntfy:
 
 ```bash
-docker restart ntfy
+sudo docker restart ntfy
 ```
 
 See [What's already set up on your Argus system](../notifications/ntfy-setup.md#whats-already-set-up-on-your-argus-system) for what each setting does.
@@ -133,21 +133,21 @@ frigate-notify sends notifications to the ntfy container over the Docker network
 Confirm ntfy is running:
 
 ```bash
-docker ps | grep ntfy
+sudo docker ps | grep ntfy
 ```
 
 Both `frigate-notify` and `ntfy` will match. Look for the `ntfy` container with a status of `Up`. If it's absent or shows `Exited`, restart it:
 
 ```bash
-docker restart ntfy
+sudo docker restart ntfy
 ```
 
-Then trigger a test event and check `docker logs frigate-notify` again.
+Then trigger a test event and check `sudo docker logs frigate-notify` again.
 
 If ntfy keeps stopping, check its logs for errors:
 
 ```bash
-docker logs ntfy --tail 50
+sudo docker logs ntfy --tail 50
 ```
 
 See [What to do when a container won't start](container.md) if ntfy won't stay running.
@@ -170,19 +170,20 @@ You can also open `https://ntfy.internal` in a browser from another device on yo
 
 ## Remote delivery not working
 
-By default, ntfy delivers notifications only while the ntfy app is on the same network as your NVR. If you want alerts when you're away, one of two options must be configured.
+By default, frigate-notify sends alerts to the ntfy server on your NVR, and your phone only gets them while it can reach the NVR. If you want alerts when you're away, one of two options must be configured.
 
-**Option 1: ntfy upstream relay**
+!!! warning "`upstream-base-url` alone won't do it"
+    Adding `upstream-base-url: "https://ntfy.sh"` to ntfy's `server.yml` does not deliver alerts away from home. It only sends ntfy.sh a message ID, and your phone still has to download the alert from your NVR. That works on your home network or over a VPN, not on cellular without a VPN.
 
-The ntfy container can forward notifications to ntfy.sh, which delivers them to your phone via FCM (Android) or APNs (iOS). This needs outbound internet access from the NVR.
+**Option 1: Publishing through ntfy.sh**
 
-Open ntfy's `server.yml` on the NVR host (`sudo nano /opt/lanfoundry/config/ntfy/server.yml`) and confirm it contains:
+frigate-notify sends alerts straight to ntfy.sh, and your phone subscribes there. If alerts aren't arriving away from home, check:
 
-```yaml
-upstream-base-url: "https://ntfy.sh"
-```
+- `alerts: ntfy: server` in `/opt/lanfoundry/config/frigate-notify/config.yml` is `https://ntfy.sh`, not `http://ntfy.nvr-network:80`, and frigate-notify was restarted after the change
+- The ntfy app is subscribed to the same topic on `ntfy.sh`, not on `ntfy.internal`. Topic names are case-sensitive
+- The NVR has outbound internet access. `sudo docker logs frigate-notify --tail 30` shows connection errors if it can't reach ntfy.sh
 
-If the line is missing, add it and restart ntfy. See [Setting up push notifications](../notifications/ntfy-setup.md#step-4-enable-remote-notifications) for the full setup steps.
+See [Option A in Setting up push notifications](../notifications/ntfy-setup.md#option-a-publish-alerts-through-ntfysh) for the full setup steps.
 
 **Option 2: Tailscale**
 
@@ -192,7 +193,7 @@ If you're using Tailscale for remote access, the ntfy app on your phone reaches 
 - If the ntfy app uses `https://ntfy.internal`: subnet routing and Split DNS are still approved and configured, so that name resolves over Tailscale. See [Access services by hostname](../privacy/remote-access.md#optional-access-services-by-hostname)
 - If the ntfy app uses the NVR's raw Tailscale IP: text-only alerts with missing snapshots are expected, because ntfy builds snapshot links from its `base-url` (`https://ntfy.internal`). Setting up Split DNS and switching the app to `https://ntfy.internal` fixes that
 
-frigate-notify doesn't need to change for either option. It always sends to ntfy over the Docker network on the NVR, and ntfy handles delivery from there.
+For Tailscale, frigate-notify keeps sending to ntfy over the Docker network on the NVR. On an iPhone, ntfy's `server.yml` also needs `upstream-base-url: "https://ntfy.sh"` so the app gets woken up (see the [iPhone note](../notifications/ntfy-setup.md#option-b-wireguard-or-tailscale)).
 
 ---
 
@@ -238,11 +239,39 @@ Work through these checks:
 
 ---
 
+## Clip links in notifications don't open
+
+If tapping a notification's clip link opens an address like `http://frigate.nvr-network:5000/...`, or a page that never loads, frigate-notify has no `public_url` set. That `frigate.nvr-network` address only exists inside Docker, so your phone and browser can't reach it.
+
+Open frigate-notify's config on the NVR host:
+
+```bash
+sudo nano /opt/lanfoundry/config/frigate-notify/config.yml
+```
+
+Under `frigate:`, add `public_url` below `server`, using the address you open Frigate at:
+
+```yaml
+frigate:
+  server: http://frigate.nvr-network:5000
+  public_url: https://frigate.internal
+```
+
+If you haven't set up Caddy and DNS, use `http://YOUR_NVR_IP:5000` instead. Leave `server` as it is, because frigate-notify needs it to reach Frigate's API. Then restart frigate-notify:
+
+```bash
+sudo docker restart frigate-notify
+```
+
+New notifications will link to the new address. Notifications you've already received keep their old links.
+
+---
+
 ## What normal looks like
 
 When notifications are working correctly:
 
-- `docker logs frigate-notify` shows no errors around the time of an event
+- `sudo docker logs frigate-notify` shows no errors around the time of an event
 - The ntfy web UI at `https://ntfy.internal` shows the notification under your topic, with a snapshot attached
 - Your phone receives the alert within about 30 seconds of the event, because frigate-notify checks Frigate on that interval (longer if going through a relay)
 - The ntfy app shows the camera name and event type in the notification
@@ -263,7 +292,7 @@ The guides on this site are free for everyone, whether you bought hardware from 
 
 **If you're running your own hardware**
 
-The frigate-notify and ntfy GitHub projects and the Frigate community forums are good resources for notification delivery issues beyond what this guide covers. Bring the output of `docker logs frigate-notify --tail 100` and `docker logs ntfy --tail 50`, and note which step in this guide is failing.
+The frigate-notify and ntfy GitHub projects and the Frigate community forums are good resources for notification delivery issues beyond what this guide covers. Bring the output of `sudo docker logs frigate-notify --tail 100` and `sudo docker logs ntfy --tail 50`, and note which step in this guide is failing.
 
 **If you purchased an Argus system from LAN Foundry**
 
@@ -272,8 +301,8 @@ Visit [lanfoundry.com/support](https://lanfoundry.com/support) for support optio
 When you open a support request, include:
 
 - Which symptom from the quick-check table matches what you're seeing
-- The output of `docker logs frigate-notify --tail 100`
-- The output of `docker logs ntfy --tail 50`
+- The output of `sudo docker logs frigate-notify --tail 100`
+- The output of `sudo docker logs ntfy --tail 50`
 - Your phone OS and version (iOS or Android)
 - Whether notifications arrive in the ntfy web UI but not on the phone, or don't appear in the web UI at all
 - Any recent changes to frigate-notify's `config.yml`, ntfy's `server.yml`, or your network setup

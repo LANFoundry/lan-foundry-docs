@@ -66,11 +66,11 @@ Times are 24-hour. A window that crosses midnight, like `23:00` to `07:00`, work
 Restart frigate-notify for the change to take effect:
 
 ```bash
-docker restart frigate-notify
+sudo docker restart frigate-notify
 ```
 
 !!! note "Quiet hours follow the container's clock"
-    frigate-notify compares these times against its own clock, which is UTC unless the container's time zone is set. If quiet hours start and end at the wrong time of day, add `TZ` (for example `TZ=America/Chicago`) to the frigate-notify service's `environment` in your compose stack and redeploy. Check what the container thinks the time is with `docker exec frigate-notify date`.
+    frigate-notify compares these times against its own clock, which is UTC unless the container's time zone is set. If quiet hours start and end at the wrong time of day, add `TZ` (for example `TZ=America/Chicago`) to the frigate-notify service's `environment` in your compose stack and redeploy. See [Set the time zone for alert times](ntfy-setup.md#set-the-time-zone-for-alert-times) for how to check the current setting and change it.
 
 ---
 

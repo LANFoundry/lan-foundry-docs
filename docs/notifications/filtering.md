@@ -125,6 +125,7 @@ app:
 
 frigate:
   server: http://frigate.nvr-network:5000
+  public_url: https://frigate.internal
   ignoressl: false
   webapi:
     enabled: true
@@ -158,8 +159,8 @@ Keep your own `topic` value. Don't copy `argus-XXXXXX` over it.
 Restart frigate-notify after any change to its `config.yml`:
 
 ```bash
-docker restart frigate-notify
-docker logs frigate-notify --tail 30
+sudo docker restart frigate-notify
+sudo docker logs frigate-notify --tail 30
 ```
 
 Check the logs for config errors, then walk in front of a camera to confirm notifications still arrive for the events you kept. If nothing arrives at all, see [Not receiving notifications](../troubleshooting/notifications.md#check-frigate-notify).

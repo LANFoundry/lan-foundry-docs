@@ -54,8 +54,8 @@ Both work at all times. Neither is a hidden or fragile escape hatch.
 **If the kiosk stays blank or never loads Frigate.** The kiosk waits for Frigate to respond, so a screen that never gets past waiting usually means Frigate itself isn't running. Open a terminal with `Ctrl+Alt+T` (or `Ctrl+Alt+F2` if the kiosk window isn't responding) and check:
 
 ```bash
-docker ps
-docker logs frigate --tail 50
+sudo docker ps
+sudo docker logs frigate --tail 50
 ```
 
 If `frigate` is missing or keeps restarting, see [What to do when a container won't start](../troubleshooting/container.md). Once Frigate is up, the kiosk loads it on its own.

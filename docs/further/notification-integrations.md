@@ -5,8 +5,8 @@ frigate-notify supports multiple notification providers and can send to more tha
 All provider config goes in the `alerts` block of `/opt/lanfoundry/config/frigate-notify/config.yml`. Restart the frigate-notify container after any change.
 
 ```bash
-docker restart frigate-notify
-docker logs frigate-notify --tail 20
+sudo docker restart frigate-notify
+sudo docker logs frigate-notify --tail 20
 ```
 
 ---

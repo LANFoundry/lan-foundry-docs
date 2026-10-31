@@ -122,7 +122,7 @@ Replace `192.168.10.101` with the camera's actual IP on the VLAN. The username, 
 Restart Frigate to pick up the change:
 
 ```bash
-docker restart frigate
+sudo docker restart frigate
 ```
 
 ---
@@ -134,7 +134,7 @@ Open the Frigate web interface and check that the camera tile shows a live image
 Check the logs if the feed doesn't appear:
 
 ```bash
-docker logs frigate --tail 50
+sudo docker logs frigate --tail 50
 ```
 
 A "Connection timed out" or "No route to host" error points to the firewall rule. A `401 Unauthorized` error means the credentials are correct but there's an authentication mismatch. See [Camera feed not showing in Frigate](../troubleshooting/camera-feed.md) for a step-by-step breakdown of each error type, including a dedicated section on feeds that stop working after moving a camera to the VLAN.
@@ -148,7 +148,7 @@ When placement is complete:
 - The camera tile in Frigate updates with a live image
 - The camera's IP in OPNsense DHCP leases matches what's in `config.yml`
 - `ping` from the NVR to the camera succeeds
-- `docker logs frigate` doesn't show connection errors for that camera
+- `sudo docker logs frigate` doesn't show connection errors for that camera
 
 The camera's web interface is no longer reachable from your laptop or phone, which is the expected result of VLAN isolation. If you need to access it for configuration, see [Accessing cameras from your computer](../troubleshooting/camera-feed.md#accessing-cameras-from-your-computer) for how to add a temporary firewall exception.
 
@@ -168,7 +168,7 @@ The guides on this site are free for everyone, whether you bought hardware from 
 
 **If you're running your own hardware**
 
-The OPNsense forums and the Frigate community are good resources for firewall rule and VLAN questions that go beyond what this guide covers. Bring your OPNsense firewall rule configuration and the output of `docker logs frigate --tail 50`.
+The OPNsense forums and the Frigate community are good resources for firewall rule and VLAN questions that go beyond what this guide covers. Bring your OPNsense firewall rule configuration and the output of `sudo docker logs frigate --tail 50`.
 
 **If you purchased an Argus system from LAN Foundry**
 
@@ -179,7 +179,7 @@ When you open a support request, include:
 - The camera's name, model, and which switch port it's connected to
 - The IP address the camera received (or that it's not receiving one)
 - Whether `ping` from the NVR to the camera succeeds
-- The output of `docker logs frigate --tail 50`
+- The output of `sudo docker logs frigate --tail 50`
 - Any recent changes to switch configuration, firewall rules, or `config.yml`
 
 The more context you provide, the faster we can pinpoint the issue. If your system is still within its warranty period, check your purchase documentation for what coverage applies.

@@ -138,14 +138,14 @@ Each should load after you accept the certificate warning on the first visit. If
 If a hostname doesn't load, check the Caddy logs first:
 
 ```bash
-docker logs caddy
+sudo docker logs caddy
 ```
 
 Common errors and what they mean:
 
 | Error | Cause | Fix |
 |---|---|---|
-| `dial tcp: lookup frigate: no such host` | Container not on `nvr-network` | `docker network connect nvr-network frigate` |
+| `dial tcp: lookup frigate: no such host` | Container not on `nvr-network` | `sudo docker network connect nvr-network frigate` |
 | `connection refused` on Cockpit or Arcane | Backend not running or wrong port | Confirm the service is up and the Caddyfile backend address matches |
 | Cockpit loads but disconnects after login | WebSocket origin rejected | Complete Step 1 (cockpit.conf) and restart Cockpit |
 | Browser can't reach the hostname at all | DNS not resolving | Check OPNsense host overrides in [DNS entries in OPNsense](dns-opnsense.md) |
@@ -162,16 +162,16 @@ If you're not on an Argus system, here's how to set Caddy up from scratch.
 All containers Caddy needs to reach must share a Docker network:
 
 ```bash
-docker network create nvr-network
+sudo docker network create nvr-network
 ```
 
 Connect your existing containers to the network:
 
 ```bash
-docker network connect nvr-network frigate
-docker network connect nvr-network arcane
-docker network connect nvr-network ntfy
-docker network connect nvr-network dozzle
+sudo docker network connect nvr-network frigate
+sudo docker network connect nvr-network arcane
+sudo docker network connect nvr-network ntfy
+sudo docker network connect nvr-network dozzle
 ```
 
 Cockpit runs on the host, not in Docker — it's reached through `host.docker.internal` instead.
@@ -190,7 +190,7 @@ Save with `Ctrl+O`, then `Enter`, then exit with `Ctrl+X`.
 ### Run the Caddy container
 
 ```bash
-docker run -d \
+sudo docker run -d \
   --name caddy \
   --network nvr-network \
   --add-host host.docker.internal:host-gateway \
