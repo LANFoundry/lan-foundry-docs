@@ -49,7 +49,7 @@ alerts:
     ignoressl: false
 ```
 
-`interval: 30` means frigate-notify checks Frigate for new events every 30 seconds. Notifications may arrive up to 30 seconds after a detection, which is normal.
+`mode: events` sends a notification for every object Frigate detects, on every camera. That can get noisy. See [Filtering which events trigger notifications](filtering.md) to narrow it down by camera, object, and zone, and [Reduce repeated notifications](filtering.md#step-5-reduce-repeated-notifications) if one bit of activity sends a burst of alerts. `interval: 30` means frigate-notify checks Frigate for new events every 30 seconds. Notifications may arrive up to 30 seconds after a detection, which is normal.
 
 Under `frigate:`, the two addresses do different jobs. `server` is how frigate-notify reaches Frigate's API over the Docker network, and it only works from inside that network. `public_url` is the address frigate-notify puts in the clip and event links in each notification, so it has to be one your phone or browser can open. If you haven't set up [Caddy](../network/caddy-reverse-proxy.md) and DNS, set it to `http://YOUR_NVR_IP:5000` instead.
 
@@ -310,5 +310,5 @@ Watch the logs for successful event processing. Walk in front of a camera and co
 ## Where to go from here
 
 - [Receiving ntfy alerts on your phone](ntfy-mobile.md) — install the ntfy app and subscribe to your topic
-- [Filtering which events trigger notifications](filtering.md) — narrow down which cameras, objects, and zones send alerts
+- [Filtering which events trigger notifications](filtering.md) — narrow down which cameras, objects, and zones send alerts, and cut down repeated notifications
 - [Setting up notification quiet hours](schedules.md) — silence notifications at night or on a schedule

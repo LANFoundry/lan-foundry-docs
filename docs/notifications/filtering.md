@@ -1,6 +1,6 @@
 # Filtering which events trigger notifications
 
-This guide covers how to control which detections send notifications to your phone. Argus systems ship with frigate-notify set to alert on every object Frigate detects, across every camera, which gets noisy fast. A few lines in frigate-notify's config narrow that down to what actually matters.
+This guide covers how to control which detections send notifications to your phone. Argus systems ship with frigate-notify set to alert on every object Frigate detects, across every camera, which gets noisy fast. A few lines in frigate-notify's config narrow that down to what actually matters, and cut down repeated alerts for the same activity.
 
 This guide assumes push notifications are set up and you're already receiving them. See [Setting up push notifications](ntfy-setup.md) if you haven't done that yet.
 
@@ -22,7 +22,7 @@ Frigate → frigate-notify → ntfy → your phone
 
 Frigate detects objects and records events. It doesn't send notifications itself. **frigate-notify** checks Frigate for new events every 30 seconds and decides which ones become notifications, so that's where notification filters live: in the `alerts` section of `/opt/lanfoundry/config/frigate-notify/config.yml`.
 
-If no filters are configured, every event on every camera sends a notification. The filters below layer on top of each other, and you can use any combination.
+If no filters are configured, every event on every camera sends a notification. The filters below layer on top of each other, and you can use any combination. If you're getting several alerts for the same bit of activity, see [Step 5](#step-5-reduce-repeated-notifications). Frigate's own notification cooldown setting doesn't apply to frigate-notify.
 
 !!! warning "Add filters under the existing `alerts:` and `frigate:` keys"
     frigate-notify's `config.yml` already has an `alerts:` section (holding the `ntfy:` settings) and a `frigate:` section. Add the snippets below *inside* those sections rather than pasting a second `alerts:` or `frigate:` line. A second `alerts:` line either stops the config from loading or replaces the first section, ntfy settings included. [Putting it together](#putting-it-together) shows a complete file.
@@ -115,6 +115,88 @@ This only affects notifications. Frigate keeps detecting and recording low-confi
 
 ---
 
+## Step 5: Reduce repeated notifications
+
+If one person walking up the driveway, or a car parked in view, sends you a burst of alerts, frigate-notify is reporting each tracked object separately. This step groups them so you get one alert per stretch of activity.
+
+!!! note "Frigate's notification cooldown doesn't apply here"
+    Frigate has its own `notifications` settings, including a `cooldown`, in its config and web UI. Those only control Frigate's built-in browser notifications. frigate-notify reads events from Frigate's API and never sees that setting, so changing it has no effect on your phone alerts. frigate-notify has no time-based cooldown of its own. The options below are how you cut down repeats.
+
+!!! warning "These settings go in frigate-notify's config, not Frigate's"
+    `app:` and `alerts:` belong in frigate-notify's `/opt/lanfoundry/config/frigate-notify/config.yml`. If you add them to Frigate's config (through the Config Editor in Frigate's web UI, or Frigate's `config.yml`), Frigate refuses to load it with `Extra inputs are not permitted`. The only setting on this page that goes in Frigate's config is `review:`, in [Getting detection alerts back](#getting-detection-alerts-back).
+
+### Why the repeats happen
+
+Argus ships frigate-notify with `mode: events`, which sends a notification for every object Frigate tracks. One person, two cars, and a dog crossing the same camera are four separate events, so they become four alerts. The same object can also be tracked as a new event if it leaves view, or is lost for a moment, and comes back.
+
+### Switch to reviews mode
+
+Frigate groups everything happening on a camera during a stretch of activity into a single **review item**, the entries you see on Frigate's Review page. Review items on the same camera never overlap. In reviews mode, frigate-notify sends one alert per review item instead of one per object.
+
+In frigate-notify's `config.yml`, change the existing `mode` line under `app:`:
+
+```yaml
+app:
+  mode: reviews
+```
+
+Frigate sorts review items into **Alerts** and **Detections**. By default, only `person` and `car` count as Alerts, and reviews mode only notifies on Alerts. If that's all you want notifications for, you're done. To get detections too, see [Getting detection alerts back](#getting-detection-alerts-back).
+
+### Limit each event to one notification
+
+As a safety net, add `notify_once` under `alerts:`, in a `general:` block next to the existing `ntfy:` settings:
+
+```yaml
+alerts:
+  general:
+    notify_once: true
+  ntfy:
+    # ...your existing ntfy settings...
+```
+
+This guarantees at most one notification per event or review item, even if frigate-notify picks the same one up again. It works in either mode.
+
+### Getting detection alerts back
+
+In reviews mode, objects that Frigate files as Detections rather than Alerts don't send notifications. There are two ways to get them back.
+
+**Notify on all detections.** Add `notify_detections` to the same `general:` block in frigate-notify's `config.yml`:
+
+```yaml
+alerts:
+  general:
+    notify_once: true
+    notify_detections: true
+```
+
+`notify_detections` only works in reviews mode. Detections are grouped into review items the same way Alerts are, so this is much quieter than going back to `mode: events`.
+
+**Promote specific objects to Alerts.** If all detections is still too noisy and only one or two object types matter, add them to Frigate's list of Alerts instead, and leave `notify_detections` off. This one goes in **Frigate's** config, not frigate-notify's:
+
+```yaml
+review:
+  alerts:
+    labels:
+      - person
+      - car
+      - dog
+```
+
+Keep `person` and `car` in the list, or they stop being Alerts. To only count an object when it's in a zone you've drawn, add `required_zones` under `alerts:` with your zone names (for example `- driveway`). This also changes what Frigate's Review page shows as Alerts. Save and restart Frigate after the change.
+
+### Apply the change
+
+Restart frigate-notify after editing its config, and check the logs for errors:
+
+```bash
+sudo docker restart frigate-notify
+sudo docker logs frigate-notify --tail 30
+```
+
+The filters in Steps 1–4 are separate settings in the same `alerts:` section, and you can use them alongside reviews mode. After switching modes, walk in front of a camera to confirm alerts still arrive for what you want.
+
+---
+
 ## Putting it together
 
 A complete frigate-notify `config.yml` combining object filtering, zone filtering, an excluded camera, and a confidence threshold, built on the Argus defaults from [Setting up push notifications](ntfy-setup.md#frigate-notify):
@@ -155,6 +237,20 @@ alerts:
 ```
 
 Keep your own `topic` value. Don't copy `argus-XXXXXX` over it.
+
+To use reviews mode from [Step 5](#step-5-reduce-repeated-notifications) as well, change these two parts of the file and leave the rest as shown:
+
+```yaml
+app:
+  mode: reviews
+
+alerts:
+  general:
+    notify_once: true
+    notify_detections: true   # optional: also notify on Frigate Detections
+  labels:
+    # ...as above...
+```
 
 Restart frigate-notify after any change to its `config.yml`:
 

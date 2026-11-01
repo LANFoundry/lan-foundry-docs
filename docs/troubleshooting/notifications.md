@@ -206,6 +206,7 @@ If notifications arrive for some events but not others, a filter is likely exclu
 - **`labels`:** `min_score` skips events below a detection confidence (0–100), `allow` limits alerts to listed object types like `person` or `car`, and `block` always ignores listed types
 - **`zones`:** limits alerts to events in specific Frigate zones
 - **`quiet`:** suppresses all alerts between a `start` and `end` time
+- **`app: mode: reviews`:** only notifies on Frigate Alerts (by default `person` and `car`) unless `alerts: general: notify_detections` is `true`. See [Getting detection alerts back](../notifications/filtering.md#getting-detection-alerts-back)
 
 Check what's set:
 
@@ -218,6 +219,17 @@ Restart frigate-notify after changing any of these.
 **Frigate's `config.yml`.** frigate-notify can only send what Frigate detects. If an object type isn't tracked for a camera, or its detection score never clears Frigate's own threshold, no event exists for frigate-notify to pick up.
 
 See [Filtering which events trigger notifications](../notifications/filtering.md) for more on choosing filters, and [Setting up notification quiet hours](../notifications/schedules.md) if you're unsure whether quiet hours are active.
+
+---
+
+## Too many notifications, or Frigate's cooldown is ignored
+
+If one person or car sends a burst of alerts, frigate-notify is in `mode: events`, which sends one notification per tracked object. Frigate's own notification `cooldown` setting doesn't help here. It only applies to Frigate's built-in browser notifications, and frigate-notify never reads it.
+
+The fix is in frigate-notify's config: switch to `mode: reviews` and add `notify_once: true`. See [Reduce repeated notifications](../notifications/filtering.md#step-5-reduce-repeated-notifications) for the steps, including how to keep detection notifications.
+
+!!! warning "Extra inputs are not permitted"
+    If Frigate shows this error after you add `app:` or `alerts:` settings, they went into Frigate's config instead of frigate-notify's. Remove them from Frigate's config, restart Frigate, and add them to `/opt/lanfoundry/config/frigate-notify/config.yml` instead.
 
 ---
 
